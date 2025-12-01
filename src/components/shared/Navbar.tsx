@@ -43,7 +43,7 @@ const Navbar = async () => {
               <LogoutButton />
             ) : (
               <Link href="/login">
-                <Button>Login</Button>
+                <Button variant="outline">Login</Button>
               </Link>
             )}
           </div>

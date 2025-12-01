@@ -4,8 +4,15 @@
 // import ProductGrid from "@/components/ProductGrid";
 // import ShopByBrands from "@/components/ShopByBrands";
 
+import HomeBanner from "@/components/Home/HomeBanner";
+import Container from "@/components/shared/Container";
+
 const Home = async () => {
-  return <div></div>;
+  return (
+    <Container>
+      <HomeBanner />
+    </Container>
+  );
 };
 
 export default Home;
