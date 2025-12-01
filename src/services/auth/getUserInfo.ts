@@ -4,9 +4,9 @@
 import { serverFetch } from "@/lib/server-fetch";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getCookie } from "./tokenHandlers";
+import { UserInfo, UserRole, Gender, UserStatus } from "@/types/user.interface";
 
-export const getUserInfo = async (): Promise<UserInfo | any> => {
-  let userInfo: UserInfo | any;
+export const getUserInfo = async (): Promise<UserInfo> => {
   try {
     const response = await serverFetch.get("/auth/me", {
       cache: "force-cache",
@@ -15,43 +15,133 @@ export const getUserInfo = async (): Promise<UserInfo | any> => {
 
     const result = await response.json();
 
-    if (result.success) {
-      const accessToken = await getCookie("accessToken");
-
-      if (!accessToken) {
-        throw new Error("No access token found");
-      }
-
-      const verifiedToken = jwt.verify(
-        accessToken,
-        process.env.JWT_SECRET as string
-      ) as JwtPayload;
-
-      userInfo = {
-        name: verifiedToken.name || "Unknown User",
-        email: verifiedToken.email,
-        role: verifiedToken.role,
-      };
+    if (!response.ok || !result.success) {
+      throw new Error(result.message || "Failed to fetch user info");
     }
 
-    userInfo = {
-      name:
-        result.data.admin?.name ||
-        result.data.doctor?.name ||
-        result.data.patient?.name ||
-        result.data.name ||
-        "Unknown User",
-      ...result.data,
+    const apiData = result.data;
+    const accessToken = await getCookie("accessToken");
+
+    // Build user info from API data
+    const userInfo: UserInfo = {
+      id: apiData.id || "",
+      email: apiData.email || "",
+      name: apiData.name || "Unknown User",
+      role: (apiData.role as UserRole) || "USER",
+      gender: apiData.gender as Gender,
+      phone: apiData.phone,
+      profileImageUrl: apiData.profileImageUrl,
+      userStatus: (apiData.userStatus as UserStatus) || "ACTIVE",
+      needPasswordChange:
+        apiData.needPasswordReset !== undefined
+          ? apiData.needPasswordReset
+          : true,
+      isDeleted: apiData.isDeleted || false,
+      createdAt: apiData.createdAt ? new Date(apiData.createdAt) : new Date(),
+      updatedAt: apiData.updatedAt ? new Date(apiData.updatedAt) : new Date(),
+      // Add user addresses if present
+      userAddresses:
+        apiData.userAddresses?.map((addr: any) => ({
+          id: addr.id,
+          addressName: addr.addressName,
+          email: addr.email,
+          isDefault: addr.isDefault,
+          createdAt: addr.createdAt ? new Date(addr.createdAt) : new Date(),
+          updatedAt: addr.updatedAt ? new Date(addr.updatedAt) : new Date(),
+          userId: addr.userId,
+          addressId: addr.addressId,
+          address: addr.address
+            ? {
+                id: addr.address.id,
+                addressLine: addr.address.addressLine,
+                city: addr.address.city,
+                state: addr.address.state,
+                zipCode: addr.address.zipCode,
+                country: addr.address.country,
+                createdAt: addr.address.createdAt
+                  ? new Date(addr.address.createdAt)
+                  : new Date(),
+                updatedAt: addr.address.updatedAt
+                  ? new Date(addr.address.updatedAt)
+                  : new Date(),
+              }
+            : undefined,
+        })) || [],
     };
+
+    // Validate with token if available
+    if (accessToken) {
+      try {
+        const verifiedToken = jwt.verify(
+          accessToken,
+          process.env.JWT_SECRET as string
+        ) as JwtPayload;
+
+        // Cross-check critical fields
+        if (verifiedToken.email !== userInfo.email) {
+          console.warn("Token email doesn't match API email");
+        }
+
+        // Update needPasswordChange from token if API doesn't have it
+        if (
+          apiData.needPasswordReset === undefined &&
+          verifiedToken.needPasswordReset !== undefined
+        ) {
+          userInfo.needPasswordChange = verifiedToken.needPasswordReset;
+        }
+      } catch (tokenError) {
+        console.warn("Token verification failed:", tokenError);
+      }
+    }
 
     return userInfo;
   } catch (error: any) {
     console.log(error);
+
+    // Try to get minimal info from token
+    try {
+      const accessToken = await getCookie("accessToken");
+      if (accessToken) {
+        const verifiedToken = jwt.verify(
+          accessToken,
+          process.env.JWT_SECRET as string
+        ) as JwtPayload;
+
+        return {
+          id: verifiedToken.sub || verifiedToken.id || "",
+          name: verifiedToken.name || "Unknown User",
+          email: verifiedToken.email || "",
+          role: (verifiedToken.role as UserRole) || "USER",
+          gender: verifiedToken.gender as Gender,
+          phone: verifiedToken.phone,
+          profileImageUrl: verifiedToken.profileImageUrl,
+          userStatus: (verifiedToken.userStatus as UserStatus) || "ACTIVE",
+          needPasswordChange:
+            verifiedToken.needPasswordReset !== undefined
+              ? verifiedToken.needPasswordReset
+              : true,
+          isDeleted: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userAddresses: [],
+        };
+      }
+    } catch (tokenError) {
+      console.log("Token fallback failed:", tokenError);
+    }
+
+    // Return minimal default
     return {
       id: "",
       name: "Unknown User",
       email: "",
-      role: "PATIENT",
+      role: "USER",
+      userStatus: "ACTIVE",
+      needPasswordChange: true,
+      isDeleted: false,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      userAddresses: [],
     };
   }
 };

@@ -1,6 +1,8 @@
+import LogoutSuccessToast from "@/components/shared/LogoutSuccessToast";
 import "./globals.css";
 import { Toaster as HotToaster } from "react-hot-toast";
 import { Toaster } from "sonner";
+import LoginSuccessToast from "@/components/shared/LoginSuccessToast";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -17,6 +19,8 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             },
           }}
         />
+        <LogoutSuccessToast />
+        <LoginSuccessToast />
       </body>
     </html>
   );

@@ -61,7 +61,7 @@ export const registerUser = async (
     }
 
     // Make API call to your backend
-    const res = await serverFetch.post("/users/create-user", {
+    const res = await serverFetch.post("/user/create-user", {
       body: newFormData,
     });
 

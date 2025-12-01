@@ -8,6 +8,12 @@ import { revalidateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { getUserInfo } from "./getUserInfo";
 import { deleteCookie, getCookie, setCookie } from "./tokenHandlers";
+import { resetPasswordSchema } from "@/zod/auth.validation";
+import {
+  getDefaultDashboardRoute,
+  isValidRedirectForRole,
+  UserRole,
+} from "@/lib/auth-utils";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function updateMyProfile(formData: FormData) {
