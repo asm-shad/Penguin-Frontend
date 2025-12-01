@@ -62,11 +62,16 @@ export async function proxy(request: NextRequest) {
   const routeOwner = getRouteOwner(pathname);
   const isAuth = isAuthRoute(pathname);
 
-  // Rule 1: User is logged in and trying to access auth route. Redirect to default dashboard
+  // Rule 1: User is logged in and trying to access auth route.
   if (accessToken && isAuth) {
-    return NextResponse.redirect(
-      new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
-    );
+    // USER role goes to home page, others go to their dashboard
+    let redirectUrl: string;
+    if (userRole === "USER") {
+      redirectUrl = "/"; // Home page for regular users
+    } else {
+      redirectUrl = getDefaultDashboardRoute(userRole as UserRole); // Dashboard for staff
+    }
+    return NextResponse.redirect(new URL(redirectUrl, request.url));
   }
 
   // Rule 2: User is trying to access open public route
@@ -101,9 +106,14 @@ export async function proxy(request: NextRequest) {
       !userInfo.needPasswordChange &&
       pathname === "/reset-password"
     ) {
-      return NextResponse.redirect(
-        new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
-      );
+      // USER role goes to home page, others go to their dashboard
+      let redirectUrl: string;
+      if (userRole === "USER") {
+        redirectUrl = "/"; // Home page for regular users
+      } else {
+        redirectUrl = getDefaultDashboardRoute(userRole as UserRole); // Dashboard for staff
+      }
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
   }
 
@@ -122,9 +132,14 @@ export async function proxy(request: NextRequest) {
   if (roleBasedRouteOwner) {
     // Check if user's role matches the route owner
     if (!isValidRedirectForRole(pathname, userRole as UserRole)) {
-      return NextResponse.redirect(
-        new URL(getDefaultDashboardRoute(userRole as UserRole), request.url)
-      );
+      // USER role goes to home page, others go to their dashboard
+      let redirectUrl: string;
+      if (userRole === "USER") {
+        redirectUrl = "/"; // Home page for regular users
+      } else {
+        redirectUrl = getDefaultDashboardRoute(userRole as UserRole); // Dashboard for staff
+      }
+      return NextResponse.redirect(new URL(redirectUrl, request.url));
     }
   }
 

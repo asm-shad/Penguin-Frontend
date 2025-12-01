@@ -29,7 +29,7 @@ export const registerUser = async (
       userAddress: {
         addressName: formData.get("addressName") as string,
         email: formData.get("email") as string,
-        isDefault: formData.get("isDefault") === "on" || true,
+        isDefault: formData.get("isDefault") === "on",
       },
     };
 
@@ -39,33 +39,49 @@ export const registerUser = async (
       return validation;
     }
 
-    // Prepare data for backend (matches your API structure)
     const validatedPayload: any = validation.data;
-    const registerData = {
+
+    // Create FormData - BUT we need a different approach
+    // Since your middleware expects JSON, let's send everything as JSON
+    const newFormData = new FormData();
+
+    // Create the complete request object
+    const requestBody = {
       email: validatedPayload.email,
       password: validatedPayload.password,
       name: validatedPayload.name,
-      phone: validatedPayload.phone,
-      gender: validatedPayload.gender,
-      address: validatedPayload.address,
-      userAddress: validatedPayload.userAddress,
+      phone: validatedPayload.phone || "",
+      gender: validatedPayload.gender || "MALE",
+      address: validatedPayload.address, // Already an object
+      userAddress: validatedPayload.userAddress, // Already an object
     };
 
-    // Create FormData for file upload
-    const newFormData = new FormData();
-    newFormData.append("data", JSON.stringify(registerData));
+    // Append the entire request as JSON
+    newFormData.append("data", JSON.stringify(requestBody));
 
     // Handle file upload if present
-    if (formData.get("file")) {
-      newFormData.append("file", formData.get("file") as Blob);
+    const file = formData.get("file");
+    if (file && file.size > 0 && file.name) {
+      newFormData.append("file", file);
+    } else {
+      console.log("No file or empty file provided");
+    }
+
+    // Debug: Log what we're sending
+    console.log("Sending data structure:", requestBody);
+    console.log("File exists?", !!file);
+    if (file) {
+      console.log("File size:", file.size, "bytes");
     }
 
     // Make API call to your backend
     const res = await serverFetch.post("/user/create-user", {
       body: newFormData,
+      // Don't set Content-Type header - let browser set it with boundary
     });
 
     const result = await res.json();
+    console.log("Backend response:", result);
 
     // Auto-login after successful registration
     if (result.success) {
@@ -83,7 +99,7 @@ export const registerUser = async (
     if (error?.digest?.startsWith("NEXT_REDIRECT")) {
       throw error;
     }
-    console.log(error);
+    console.log("Registration error:", error);
     return {
       success: false,
       message: `${

@@ -11,15 +11,34 @@ import { registerUser } from "@/services/auth/registerUser";
 const RegisterForm = () => {
   const [state, formAction, isPending] = useActionState(registerUser, null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const formRef = useRef<HTMLFormElement>(null);
 
   useEffect(() => {
     if (state && !state.success && state.message) {
       toast.error(state.message);
     }
+    if (state && state.success) {
+      toast.success(state.message || "Registration successful!");
+    }
   }, [state]);
 
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    // Create FormData from the form
+    const formData = new FormData(event.currentTarget);
+
+    // Make sure the file is included
+    if (fileInputRef.current?.files?.[0]) {
+      formData.set("file", fileInputRef.current.files[0]); // Use set() to replace if exists
+    }
+
+    // Call the server action with the FormData
+    formAction(formData);
+  };
+
   return (
-    <form action={formAction}>
+    <form ref={formRef} onSubmit={handleSubmit}>
       <FieldGroup>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {/* Profile Image Upload */}
@@ -32,19 +51,13 @@ const RegisterForm = () => {
               accept="image/*"
               ref={fileInputRef}
               className="cursor-pointer"
-              onChange={(e) => {
-                // Optional: Preview image
-                const file = e.target.files?.[0];
-                if (file) {
-                  // You can add image preview logic here
-                }
-              }}
             />
             <FieldDescription>
               Upload a profile picture (optional)
             </FieldDescription>
           </Field>
 
+          {/* Rest of your form fields - KEEP THEM EXACTLY AS THEY ARE */}
           {/* Name */}
           <Field className="md:col-span-2">
             <FieldLabel htmlFor="name">Full Name *</FieldLabel>
