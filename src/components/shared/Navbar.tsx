@@ -7,15 +7,12 @@ import HeaderMenu from "./HeaderMenu";
 import SearchBar from "./SearchBar";
 import CartIcon from "./CartIcon";
 import Container from "./Container";
-import SignIn from "./SignIn";
+import { getCookie } from "@/services/auth/tokenHandlers";
+import { Button } from "../ui/button";
+import LogoutButton from "./LogoutButton";
 
 const Navbar = async () => {
-  //   const user = await currentUser();
-  //   const { userId } = await auth();
-  //   let orders = null;
-  //   if (userId) {
-  //     orders = await getMyOrders(userId);
-  //   }
+  const accessToken = await getCookie("accessToken");
 
   return (
     <header className="sticky top-0 z-50 py-5 bg-white/70 backdrop-blur-md">
@@ -40,15 +37,16 @@ const Navbar = async () => {
               {/* {orders?.length ? orders?.length : 0} */}
             </span>
           </Link>
-          {/* )} */}
 
-          {/* <ClerkLoaded>
-            <SignedIn>
-              <UserButton />
-            </SignedIn> */}
-          {/* {!user && <SignIn />} */}
-          <SignIn />
-          {/* </ClerkLoaded> */}
+          <div className="hidden md:flex items-center space-x-2">
+            {accessToken ? (
+              <LogoutButton />
+            ) : (
+              <Link href="/login">
+                <Button>Login</Button>
+              </Link>
+            )}
+          </div>
         </div>
       </Container>
     </header>
