@@ -53,7 +53,7 @@ const RegisterForm = () => {
               name="name"
               type="text"
               placeholder="John Doe"
-              required
+              // required
             />
             <InputFieldError field="name" state={state} />
           </Field>
@@ -66,7 +66,7 @@ const RegisterForm = () => {
               name="email"
               type="email"
               placeholder="m@example.com"
-              required
+              // required
             />
             <InputFieldError field="email" state={state} />
           </Field>
@@ -113,7 +113,7 @@ const RegisterForm = () => {
                 name="addressName"
                 type="text"
                 placeholder="Home, Office, etc."
-                required
+                // required
               />
               <InputFieldError field="addressName" state={state} />
             </Field>
@@ -126,7 +126,7 @@ const RegisterForm = () => {
                 name="addressLine"
                 type="text"
                 placeholder="123 Main Street"
-                required
+                // required
               />
               <InputFieldError field="addressLine" state={state} />
             </Field>
@@ -140,7 +140,7 @@ const RegisterForm = () => {
                   name="city"
                   type="text"
                   placeholder="New York"
-                  required
+                  // required
                 />
                 <InputFieldError field="city" state={state} />
               </Field>
@@ -153,7 +153,7 @@ const RegisterForm = () => {
                   name="state"
                   type="text"
                   placeholder="NY"
-                  required
+                  // required
                 />
                 <InputFieldError field="state" state={state} />
               </Field>
@@ -166,7 +166,7 @@ const RegisterForm = () => {
                   name="zipCode"
                   type="text"
                   placeholder="10001"
-                  required
+                  // required
                 />
                 <InputFieldError field="zipCode" state={state} />
               </Field>
@@ -213,7 +213,7 @@ const RegisterForm = () => {
                 name="password"
                 type="password"
                 placeholder="At least 6 characters"
-                required
+                // required
               />
               <InputFieldError field="password" state={state} />
             </Field>
@@ -228,7 +228,7 @@ const RegisterForm = () => {
                 name="confirmPassword"
                 type="password"
                 placeholder="Confirm your password"
-                required
+                // required
               />
               <InputFieldError field="confirmPassword" state={state} />
             </Field>

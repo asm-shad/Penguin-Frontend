@@ -1,85 +1,191 @@
-export type UserRole = "ADMIN" | "DOCTOR" | "PATIENT";
+export type UserRole =
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "PRODUCT_MANAGER"
+  | "CUSTOMER_SUPPORT"
+  | "USER";
 
-// exact : ["/my-profile", "settings"]
-//   patterns: [/^\/dashboard/, /^\/patient/], // Routes starting with /dashboard/* /patient/*
 export type RouteConfig = {
-    exact: string[],
-    patterns: RegExp[],
-}
+  exact: string[];
+  patterns: RegExp[];
+};
 
+// Public routes that don't require authentication
 export const authRoutes = ["/login", "/register", "/forgot-password"];
 
+// Common routes accessible to all authenticated users
 export const commonProtectedRoutes: RouteConfig = {
-    exact: ["/my-profile", "/settings", "/change-password", "/reset-password"],
-    patterns: [], // [/password/change-password, /password/reset-password => /password/*]
-}
+  exact: ["/my-profile", "/settings", "/change-password", "/reset-password"],
+  patterns: [],
+};
 
-export const doctorProtectedRoutes: RouteConfig = {
-    patterns: [/^\/doctor/], // Routes starting with /doctor/* , /assitants, /appointments/*
-    exact: [], // "/assistants"
-}
+// SUPER_ADMIN specific routes
+export const superAdminProtectedRoutes: RouteConfig = {
+  exact: ["/super-admin"],
+  patterns: [/^\/super-admin\//],
+};
 
+// ADMIN routes (accessible by both SUPER_ADMIN and ADMIN)
 export const adminProtectedRoutes: RouteConfig = {
-    patterns: [/^\/admin/], // Routes starting with /admin/*
-    exact: [], // "/admins"
-}
+  exact: ["/admin"],
+  patterns: [/^\/admin\//],
+};
 
-export const patientProtectedRoutes: RouteConfig = {
-    patterns: [/^\/dashboard/], // Routes starting with /dashboard/*
-    exact: [], // "/dashboard"
-}
+// PRODUCT_MANAGER specific routes
+export const managerProtectedRoutes: RouteConfig = {
+  exact: ["/product-manager"],
+  patterns: [/^\/product-manager\//],
+};
 
-export const isAuthRoute = (pathname: string) => {
-    return authRoutes.some((route: string) => route === pathname);
-}
+// CUSTOMER_SUPPORT specific routes
+export const supportProtectedRoutes: RouteConfig = {
+  exact: ["/customer-support"],
+  patterns: [/^\/customer-support\//],
+};
 
-export const isRouteMatches = (pathname: string, routes: RouteConfig): boolean => {
-    if (routes.exact.includes(pathname)) {
-        return true;
-    }
-    return routes.patterns.some((pattern: RegExp) => pattern.test(pathname))
-    // if pathname === /dashboard/my-appointments => matches /^\/dashboard/ => true
-}
+// USER (customer) routes
+export const userProtectedRoutes: RouteConfig = {
+  exact: ["/dashboard"],
+  patterns: [/^\/dashboard\//],
+};
 
-export const getRouteOwner = (pathname: string): "ADMIN" | "DOCTOR" | "PATIENT" | "COMMON" | null => {
-    if (isRouteMatches(pathname, adminProtectedRoutes)) {
-        return "ADMIN";
-    }
-    if (isRouteMatches(pathname, doctorProtectedRoutes)) {
-        return "DOCTOR";
-    }
-    if (isRouteMatches(pathname, patientProtectedRoutes)) {
-        return "PATIENT";
-    }
-    if (isRouteMatches(pathname, commonProtectedRoutes)) {
-        return "COMMON";
-    }
-    return null;
-}
+// Helper: Check if route is authentication route
+export const isAuthRoute = (pathname: string): boolean => {
+  return authRoutes.some((route: string) => route === pathname);
+};
 
+// Helper: Check if route matches a route configuration
+export const isRouteMatches = (
+  pathname: string,
+  routes: RouteConfig
+): boolean => {
+  // Check exact matches first for performance
+  if (routes.exact.includes(pathname)) {
+    return true;
+  }
+  // Then check patterns
+  return routes.patterns.some((pattern: RegExp) => pattern.test(pathname));
+};
+
+// Helper: Determine who owns/controls a route
+export const getRouteOwner = (
+  pathname: string
+):
+  | "SUPER_ADMIN"
+  | "ADMIN"
+  | "PRODUCT_MANAGER"
+  | "CUSTOMER_SUPPORT"
+  | "USER"
+  | "COMMON"
+  | null => {
+  // Order matters! Check most specific first
+
+  // SUPER_ADMIN routes (specific routes only for SUPER_ADMIN)
+  if (isRouteMatches(pathname, superAdminProtectedRoutes)) {
+    // But make sure it's not a route that ADMIN should also access
+    if (pathname === "/super-admin/create-admin") {
+      return "SUPER_ADMIN"; // Only SUPER_ADMIN can create admins
+    }
+  }
+
+  // ADMIN routes (accessible by both SUPER_ADMIN and ADMIN)
+  if (isRouteMatches(pathname, adminProtectedRoutes)) {
+    return "ADMIN";
+  }
+
+  // Role-specific routes
+  if (isRouteMatches(pathname, managerProtectedRoutes)) {
+    return "PRODUCT_MANAGER";
+  }
+
+  if (isRouteMatches(pathname, supportProtectedRoutes)) {
+    return "CUSTOMER_SUPPORT";
+  }
+
+  if (isRouteMatches(pathname, userProtectedRoutes)) {
+    return "USER";
+  }
+
+  // Common routes for all authenticated users
+  if (isRouteMatches(pathname, commonProtectedRoutes)) {
+    return "COMMON";
+  }
+
+  // Public route or not found
+  return null;
+};
+
+// Helper: Get default dashboard route based on role
 export const getDefaultDashboardRoute = (role: UserRole): string => {
-    if (role === "ADMIN") {
-        return "/admin/dashboard";
-    }
-    if (role === "DOCTOR") {
-        return "/doctor/dashboard";
-    }
-    if (role === "PATIENT") {
-        return "/dashboard";
-    }
-    return "/";
-}
+  switch (role) {
+    case "SUPER_ADMIN":
+      return "/super-admin/dashboard";
+    case "ADMIN":
+      return "/admin/dashboard";
+    case "PRODUCT_MANAGER":
+      return "/product-manager/dashboard";
+    case "CUSTOMER_SUPPORT":
+      return "/customer-support/dashboard";
+    case "USER":
+      return "/dashboard";
+    default:
+      return "/";
+  }
+};
 
-export const isValidRedirectForRole = (redirectPath: string, role: UserRole): boolean => {
-    const routeOwner = getRouteOwner(redirectPath);
+// Helper: Check if a user role can access a specific route
+export const isValidRedirectForRole = (
+  redirectPath: string,
+  role: UserRole
+): boolean => {
+  const routeOwner = getRouteOwner(redirectPath);
 
-    if (routeOwner === null || routeOwner === "COMMON") {
-        return true;
-    }
+  // Public routes and common routes are accessible to all
+  if (routeOwner === null || routeOwner === "COMMON") {
+    return true;
+  }
 
-    if (routeOwner === role) {
-        return true;
-    }
+  switch (role) {
+    case "SUPER_ADMIN":
+      // SUPER_ADMIN can access everything except other role-specific routes
+      return (
+        routeOwner === "SUPER_ADMIN" ||
+        routeOwner === "ADMIN" ||
+        routeOwner === "PRODUCT_MANAGER" ||
+        routeOwner === "CUSTOMER_SUPPORT" ||
+        routeOwner === "USER"
+      );
 
-    return false;
-}
+    case "ADMIN":
+      // ADMIN can access ADMIN routes only
+      return routeOwner === "ADMIN";
+
+    case "PRODUCT_MANAGER":
+      return routeOwner === "PRODUCT_MANAGER";
+
+    case "CUSTOMER_SUPPORT":
+      return routeOwner === "CUSTOMER_SUPPORT";
+
+    case "USER":
+      return routeOwner === "USER";
+
+    default:
+      // TypeScript exhaustive check
+      const _exhaustiveCheck: never = role;
+      return _exhaustiveCheck;
+  }
+};
+
+// Optional: Helper to check if user can access a route
+export const canUserAccessRoute = (
+  pathname: string,
+  role: UserRole
+): boolean => {
+  const routeOwner = getRouteOwner(pathname);
+
+  if (routeOwner === null || routeOwner === "COMMON") {
+    return true;
+  }
+
+  return isValidRedirectForRole(pathname, role);
+};
