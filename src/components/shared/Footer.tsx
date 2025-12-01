@@ -4,6 +4,8 @@ import Link from "next/link";
 import FooterTop from "./FooterTop";
 import Logo from "./Logo";
 import SocialMedia from "./SocialMedia";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
 
 const Footer = () => {
   return (
@@ -13,10 +15,10 @@ const Footer = () => {
         <div className="py-12 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Logo />
-            <SubText>
+            {/* <SubText>
               Discover curated furniture collections at Shopcartyt, blending
               style and comfort to elevate your living spaces.
-            </SubText>
+            </SubText> */}
             <SocialMedia
               className="text-darkColor/60"
               iconClassName="border-darkColor/60 hover:border-shop_light_green hover:text-shop_light_green"
@@ -24,7 +26,7 @@ const Footer = () => {
             />
           </div>
           <div>
-            <SubTitle>Quick Links</SubTitle>
+            {/* <SubTitle>Quick Links</SubTitle> */}
             <ul className="space-y-3 mt-4">
               {quickLinksData?.map((item) => (
                 <li key={item?.title}>
@@ -39,7 +41,7 @@ const Footer = () => {
             </ul>
           </div>
           <div>
-            <SubTitle>Categories</SubTitle>
+            {/* <SubTitle>Categories</SubTitle> */}
             <ul className="space-y-3 mt-4">
               {categoriesData?.map((item) => (
                 <li key={item?.title}>
@@ -54,11 +56,11 @@ const Footer = () => {
             </ul>
           </div>
           <div className="space-y-4">
-            <SubTitle>Newsletter</SubTitle>
+            {/* <SubTitle>Newsletter</SubTitle>
             <SubText>
               Subscribe to our newsletter to receive updates and exclusive
               offers
-            </SubText>
+            </SubText> */}
             <form className="space-y-3">
               <Input placeholder="Enter your email" type="email" required />
               <Button className="w-full">Subscribe</Button>
