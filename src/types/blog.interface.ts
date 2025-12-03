@@ -1,89 +1,65 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-import { IUser } from "./user.interface";
+// Add to existing product.interface.ts
 
-// BlogCategory interface - MATCHES YOUR SCHEMA
+// Blog Types
+export interface IBlogUser {
+  id: string;
+  name: string;
+  email: string;
+  profileImageUrl?: string;
+}
+
 export interface IBlogCategory {
   id: string;
   name: string;
   slug: string;
   description?: string;
-  createdAt: Date;
-  updatedAt: Date;
-
-  // Relations
-  blogPostCategories?: IBlogPostCategory[];
 }
 
-// BlogPost interface - MATCHES YOUR UPDATED SCHEMA (with userId instead of authorId)
+export interface IBlogPostCategory {
+  id: string;
+  blogPostId: string;
+  categoryId: string;
+  category: IBlogCategory;
+}
+
 export interface IBlogPost {
   id: string;
   title: string;
   slug: string;
   excerpt?: string;
-  content?: any; // Json type from Prisma
+  content: string;
   featuredImageUrl?: string;
+  isFeatured: boolean;
   isLatest: boolean;
-  publishedAt?: Date;
+  publishedAt?: Date | null;
+  viewCount: number;
+  readingTime?: number;
+  metaTitle?: string;
+  metaDescription?: string;
+  metaKeywords?: string[];
   createdAt: Date;
   updatedAt: Date;
 
-  // Relations - UPDATED: userId instead of authorId
-  userId: string;
-  user?: IUser;
+  // Relations
+  userId?: string;
+  user?: IBlogUser;
   blogPostCategories?: IBlogPostCategory[];
 
-  // Helper/computed fields for frontend
-  categories?: IBlogCategory[];
-  authorName?: string;
-  authorImage?: string;
-  readTime?: string;
+  // Prisma _count
+  _count?: {
+    blogPostCategories: number;
+  };
 }
 
-// BlogPostCategory (Junction Table) - MATCHES YOUR SCHEMA
-export interface IBlogPostCategory {
-  id: string;
-  createdAt: Date;
-  blogPostId: string;
-  blogPost: IBlogPost;
-  categoryId: string;
-  category: IBlogCategory;
-}
-
-// Blog creation/update DTO
-export interface ICreateBlogPostDto {
-  title: string;
-  slug: string;
-  excerpt?: string;
-  content?: any;
-  featuredImageUrl?: string;
-  isLatest?: boolean;
-  publishedAt?: Date;
-  categoryIds?: string[];
-}
-
-// Blog filter types
 export interface IBlogPostFilters {
-  category?: string;
   searchTerm?: string;
+  userId?: string;
+  categoryId?: string;
+  categorySlug?: string;
+  isFeatured?: boolean;
   isLatest?: boolean;
-  author?: string;
-  sortBy?: "createdAt" | "publishedAt" | "title";
+  sortBy?: "publishedAt" | "createdAt" | "title" | "viewCount";
   sortOrder?: "asc" | "desc";
   page?: number;
   limit?: number;
-}
-
-// Blog comment interface (if you add comments later)
-export interface IBlogComment {
-  id: string;
-  content: string;
-  authorName: string;
-  authorEmail: string;
-  isApproved: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  blogPostId: string;
-  blogPost?: IBlogPost;
-  parentId?: string;
-  replies?: IBlogComment[];
 }

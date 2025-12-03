@@ -1,7 +1,6 @@
 import { IOrderItem, IReturnItem } from "./order.interface";
 import { IUser, ProductStatusType, UserRoleType } from "./user.interface";
 
-// Category interface - MATCHES YOUR SCHEMA
 export interface ICategory {
   id: string;
   name: string;
@@ -21,7 +20,6 @@ export interface ICategory {
   };
 }
 
-// Brand interface - MATCHES YOUR SCHEMA
 export interface IBrand {
   id: string;
   name: string;
@@ -34,7 +32,6 @@ export interface IBrand {
   products?: IProduct[];
 }
 
-// ProductImage interface - MATCHES YOUR SCHEMA
 export interface IProductImage {
   id: string;
   imageUrl: string;
@@ -47,7 +44,6 @@ export interface IProductImage {
   product?: IProduct;
 }
 
-// ProductVariant interface - MATCHES YOUR SCHEMA
 export interface IProductVariant {
   id: string;
   name: string; // e.g., "Color", "Size"
@@ -65,7 +61,6 @@ export interface IProductVariant {
   productInventories?: IProductInventory[];
 }
 
-// Product interface - MATCHES YOUR SCHEMA
 export interface IProduct {
   id: string;
   name: string;
@@ -132,7 +127,6 @@ export interface IProductReview {
   };
 }
 
-// Wishlist interface - MATCHES YOUR SCHEMA
 export interface IWishlist {
   id: string;
   createdAt: Date;
@@ -142,7 +136,6 @@ export interface IWishlist {
   product?: IProduct;
 }
 
-// ProductInventory interface - MATCHES YOUR SCHEMA
 export interface IProductInventory {
   id: string;
   changeType:
@@ -167,7 +160,6 @@ export interface IProductInventory {
   user?: IUser;
 }
 
-// API Response types
 export interface IApiResponse<T> {
   success: boolean;
   message: string;
@@ -179,7 +171,6 @@ export interface IApiResponse<T> {
   };
 }
 
-// Filter types for products
 export interface IProductFilters {
   category?: string;
   brand?: string;
@@ -224,4 +215,15 @@ export interface ICreateProductDto {
     imageUrl?: string;
     isActive?: boolean;
   }>;
+}
+
+export interface IUpdateProductStatusDto {
+  status: ProductStatusType;
+  discount?: number; // Optional discount (only valid for HOT and SALE)
+}
+
+export interface IUpdateProductStatusResponse {
+  success: boolean;
+  message?: string;
+  data?: IProduct;
 }
