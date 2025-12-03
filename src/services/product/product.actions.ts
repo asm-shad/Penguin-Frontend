@@ -41,13 +41,14 @@ export const fetchProducts = cache(async (category?: string) => {
 // Server-side function to fetch categories
 export const fetchCategories = cache(async () => {
   try {
-    const res = await serverFetch.get("/categories?isFeatured=true");
+    const res = await serverFetch.get("/category?isFeatured=true");
 
     if (!res.ok) {
       throw new Error(`Failed to fetch categories: ${res.statusText}`);
     }
 
     const result = await res.json();
+    console.log("API Result:", result);
 
     if (!result.success) {
       throw new Error(result.message || "Failed to fetch categories");

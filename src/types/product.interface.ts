@@ -13,6 +13,12 @@ export interface ICategory {
   updatedAt: Date;
   // Relations - productCategories is a junction table
   productCategories?: IProductCategory[];
+  // Add productCount for transformed data from backend
+  productCount?: number;
+  // For Prisma _count
+  _count?: {
+    productCategories: number;
+  };
 }
 
 // Brand interface - MATCHES YOUR SCHEMA
