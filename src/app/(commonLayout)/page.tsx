@@ -1,6 +1,7 @@
 // app/page.tsx
 import HomeBanner from "@/components/Home/HomeBanner";
 import HomeCategories from "@/components/Home/HomeCategories";
+import ShopByBrands from "@/components/Home/ShopByBrands";
 import ProductGrid from "@/components/modules/Product/ProductGrid";
 import Container from "@/components/shared/Container";
 import { fetchFeaturedCategoriesWithCounts } from "@/services/product/category.actions";
@@ -19,6 +20,7 @@ const Home = async () => {
       <HomeBanner />
       <ProductGrid />
       <HomeCategories categories={featuredCategories} />
+      <ShopByBrands />
     </Container>
   );
 };
