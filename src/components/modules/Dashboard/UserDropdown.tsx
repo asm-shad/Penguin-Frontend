@@ -11,12 +11,12 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { logoutUser } from "@/services/auth/logoutUser";
-import { UserInfo } from "@/types/user.interface";
+import { IUser } from "@/types/user.interface";
 import { Settings, User } from "lucide-react";
 import Link from "next/link";
 
 interface UserDropdownProps {
-  userInfo: UserInfo;
+  userInfo: IUser;
 }
 
 const UserDropdown = ({ userInfo }: UserDropdownProps) => {

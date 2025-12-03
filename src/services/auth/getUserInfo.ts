@@ -4,9 +4,14 @@
 import { serverFetch } from "@/lib/server-fetch";
 import jwt, { JwtPayload } from "jsonwebtoken";
 import { getCookie } from "./tokenHandlers";
-import { UserInfo, UserRole, Gender, UserStatus } from "@/types/user.interface";
+import {
+  IUser,
+  UserRoleType,
+  GenderType,
+  UserStatusType,
+} from "@/types/user.interface";
 
-export const getUserInfo = async (): Promise<UserInfo> => {
+export const getUserInfo = async (): Promise<IUser> => {
   try {
     const response = await serverFetch.get("/auth/me", {
       cache: "force-cache",
@@ -23,16 +28,16 @@ export const getUserInfo = async (): Promise<UserInfo> => {
     const accessToken = await getCookie("accessToken");
 
     // Build user info from API data
-    const userInfo: UserInfo = {
+    const userInfo: IUser = {
       id: apiData.id || "",
       email: apiData.email || "",
       name: apiData.name || "Unknown User",
-      role: (apiData.role as UserRole) || "USER",
-      gender: apiData.gender as Gender,
+      role: (apiData.role as UserRoleType) || "USER",
+      gender: apiData.gender as GenderType,
       phone: apiData.phone,
       profileImageUrl: apiData.profileImageUrl,
-      userStatus: (apiData.userStatus as UserStatus) || "ACTIVE",
-      needPasswordChange:
+      userStatus: (apiData.userStatus as UserStatusType) || "ACTIVE",
+      needPasswordReset:
         apiData.needPasswordReset !== undefined
           ? apiData.needPasswordReset
           : true,
@@ -87,7 +92,7 @@ export const getUserInfo = async (): Promise<UserInfo> => {
           apiData.needPasswordReset === undefined &&
           verifiedToken.needPasswordReset !== undefined
         ) {
-          userInfo.needPasswordChange = verifiedToken.needPasswordReset;
+          userInfo.needPasswordReset = verifiedToken.needPasswordReset;
         }
       } catch (tokenError) {
         console.warn("Token verification failed:", tokenError);
@@ -111,12 +116,12 @@ export const getUserInfo = async (): Promise<UserInfo> => {
           id: verifiedToken.sub || verifiedToken.id || "",
           name: verifiedToken.name || "Unknown User",
           email: verifiedToken.email || "",
-          role: (verifiedToken.role as UserRole) || "USER",
-          gender: verifiedToken.gender as Gender,
+          role: (verifiedToken.role as UserRoleType) || "USER",
+          gender: verifiedToken.gender as GenderType,
           phone: verifiedToken.phone,
           profileImageUrl: verifiedToken.profileImageUrl,
-          userStatus: (verifiedToken.userStatus as UserStatus) || "ACTIVE",
-          needPasswordChange:
+          userStatus: (verifiedToken.userStatus as UserStatusType) || "ACTIVE",
+          needPasswordReset:
             verifiedToken.needPasswordReset !== undefined
               ? verifiedToken.needPasswordReset
               : true,
@@ -137,7 +142,7 @@ export const getUserInfo = async (): Promise<UserInfo> => {
       email: "",
       role: "USER",
       userStatus: "ACTIVE",
-      needPasswordChange: true,
+      needPasswordReset: true,
       isDeleted: false,
       createdAt: new Date(),
       updatedAt: new Date(),

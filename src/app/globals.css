@@ -16,7 +16,12 @@
   --color-lightColor: #4a5568; /* improved readable gray */
   --color-lightOrange: #ffd5bc; /* softer accent orange */
   --color-shop_light_green: #00c28b; /* duplicate replaced consistently */
+  --color-shop_lighter_green: #93d991; /* duplicate replaced consistently */
   --color-deal-bg: #dfe6ee; /* more modern deal background */
+  --color-shop_dark_blue: #6c7fd8;
+  --color-shop_lighter_bg: #f1f3f8;
+  --color-shop_light_text: #686e7d;
+  --color-shop_lighter_text: #ababab;
 }
 
 @theme inline {

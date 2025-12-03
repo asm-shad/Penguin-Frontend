@@ -7,12 +7,12 @@ import { SheetTitle } from "@/components/ui/sheet";
 import { getIconComponent } from "@/lib/icon-mapper";
 import { cn } from "@/lib/utils";
 import { NavSection } from "@/types/dashboard.interface";
-import { UserInfo } from "@/types/user.interface";
+import { IUser } from "@/types/user.interface";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 interface DashboardMobileSidebarContentProps {
-  userInfo: UserInfo;
+  userInfo: IUser;
   navItems: NavSection[];
   dashboardHome: string;
 }
