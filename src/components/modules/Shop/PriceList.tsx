@@ -1,7 +1,7 @@
 import React from "react";
-import Title from "../Title";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Label } from "../ui/label";
+import { RadioGroup, RadioGroupItem } from "../../ui/radio-group";
+import { Label } from "../../ui/label";
+import { Title } from "@/components/ui/text";
 
 const priceArray = [
   { title: "Under $100", value: "0-100" },
@@ -15,6 +15,7 @@ interface Props {
   selectedPrice?: string | null;
   setSelectedPrice: React.Dispatch<React.SetStateAction<string | null>>;
 }
+
 const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
   return (
     <div className="w-full bg-white p-5">
@@ -23,19 +24,23 @@ const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
         {priceArray?.map((price, index) => (
           <div
             key={index}
-            onClick={() => setSelectedPrice(price?.value)}
+            onClick={() => setSelectedPrice(price.value)}
             className="flex items-center space-x-2 hover:cursor-pointer"
           >
             <RadioGroupItem
-              value={price?.value}
-              id={price?.value}
+              value={price.value}
+              id={price.value}
               className="rounded-sm"
             />
             <Label
               htmlFor={price.value}
-              className={`${selectedPrice === price?.value ? "font-semibold text-shop_dark_green" : "font-normal"}`}
+              className={`${
+                selectedPrice === price.value
+                  ? "font-semibold text-shop_dark_green"
+                  : "font-normal"
+              }`}
             >
-              {price?.title}
+              {price.title}
             </Label>
           </div>
         ))}
@@ -43,7 +48,7 @@ const PriceList = ({ selectedPrice, setSelectedPrice }: Props) => {
       {selectedPrice && (
         <button
           onClick={() => setSelectedPrice(null)}
-          className="text-sm font-medium mt-2 underline underline-offset-2 decoration-[1px] hover:text-shop_dark_green hoverEffect"
+          className="text-sm font-medium mt-2 underline underline-offset-2 decoration-1 hover:text-shop_dark_green hoverEffect"
         >
           Reset selection
         </button>
