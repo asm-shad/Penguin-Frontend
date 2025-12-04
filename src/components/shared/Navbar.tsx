@@ -1,4 +1,3 @@
-import FavoriteButton from "./FavoriteButton";
 import Link from "next/link";
 import { Logs } from "lucide-react";
 import MobileMenu from "./MobileMenu";
@@ -10,6 +9,7 @@ import Container from "./Container";
 import { getCookie } from "@/services/auth/tokenHandlers";
 import { Button } from "../ui/button";
 import LogoutButton from "./LogoutButton";
+import FavoriteButton from "../modules/SingleProduct/FavoriteButton";
 
 const Navbar = async () => {
   const accessToken = await getCookie("accessToken");

@@ -25,7 +25,7 @@ const ProductCard = ({ product }: { product: IProduct }) => {
     <div className="text-sm border rounded-md border-darkBlue/20 group bg-white hover:shadow-lg transition-shadow">
       <div className="relative group overflow-hidden bg-shop_light_bg">
         {primaryImage && (
-          <Link href={`/products/${product?.slug}`}>
+          <Link href={`/product/${product?.slug}`}>
             <Image
               src={primaryImage}
               alt={product.name}
@@ -70,7 +70,7 @@ const ProductCard = ({ product }: { product: IProduct }) => {
 
         {/* Product Name */}
         <Title className="text-sm line-clamp-1 hover:text-shop_dark_green transition-colors">
-          <Link href={`/products/${product?.slug}`}>{product?.name}</Link>
+          <Link href={`/product/${product?.slug}`}>{product?.name}</Link>
         </Title>
 
         {/* Brand */}
