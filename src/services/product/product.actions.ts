@@ -2,11 +2,7 @@
 "use server";
 
 import { serverFetch } from "@/lib/server-fetch";
-import {
-  ICategory,
-  IProduct,
-  IProductFilters,
-} from "@/types/product.interface";
+import { IProduct, IProductFilters } from "@/types/product.interface";
 import { ProductStatusType } from "@/types/user.interface";
 import { cache } from "react";
 
@@ -34,7 +30,7 @@ export const fetchProducts = cache(async (filters?: IProductFilters) => {
     if (filters?.limit) queryParams.append("limit", filters.limit.toString());
 
     const queryString = queryParams.toString();
-    const endpoint = queryString ? `/products?${queryString}` : "/products";
+    const endpoint = queryString ? `/product?${queryString}` : "/product";
 
     const res = await serverFetch.get(endpoint);
 
@@ -63,6 +59,69 @@ export const fetchProducts = cache(async (filters?: IProductFilters) => {
     };
   }
 });
+
+// Fetch products by category slug
+export const fetchProductsByCategorySlug = cache(
+  async (categorySlug: string, filters?: Omit<IProductFilters, "category">) => {
+    try {
+      // Build query string from filters
+      const queryParams = new URLSearchParams();
+
+      if (filters?.searchTerm)
+        queryParams.append("searchTerm", filters.searchTerm);
+      if (filters?.brand) queryParams.append("brandId", filters.brand);
+      if (filters?.minPrice)
+        queryParams.append("minPrice", filters.minPrice.toString());
+      if (filters?.maxPrice)
+        queryParams.append("maxPrice", filters.maxPrice.toString());
+      if (filters?.status) queryParams.append("status", filters.status);
+      if (filters?.isFeatured !== undefined)
+        queryParams.append("isFeatured", filters.isFeatured.toString());
+      if (filters?.isActive !== undefined)
+        queryParams.append("isActive", filters.isActive.toString());
+      if (filters?.sortBy) queryParams.append("sortBy", filters.sortBy);
+      if (filters?.sortOrder)
+        queryParams.append("sortOrder", filters.sortOrder);
+      if (filters?.page) queryParams.append("page", filters.page.toString());
+      if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/product/category/${categorySlug}?${queryString}`
+        : `/product/category/${categorySlug}`;
+
+      const res = await serverFetch.get(endpoint);
+
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch products by category: ${res.statusText}`
+        );
+      }
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(
+          result.message || "Failed to fetch products by category"
+        );
+      }
+
+      return {
+        success: true,
+        data: result.data as IProduct[],
+        meta: result.meta,
+      };
+    } catch (error: any) {
+      console.error("Error fetching products by category:", error);
+      return {
+        success: false,
+        message: error.message || "Failed to fetch products by category",
+        data: [],
+        meta: undefined,
+      };
+    }
+  }
+);
 
 export const fetchFeaturedProducts = cache(async () => {
   try {
@@ -218,7 +277,7 @@ export const fetchProductById = cache(async (id: string) => {
 
 export const createProduct = cache(async (productData: FormData) => {
   try {
-    const res = await serverFetch.post("/products", {
+    const res = await serverFetch.post("/product", {
       body: productData,
       headers: {
         // Content-Type will be set automatically for FormData
@@ -483,35 +542,6 @@ export const fetchActiveProducts = cache(async (limit?: number) => {
     return {
       success: false,
       message: error.message || "Failed to fetch active products",
-      data: [],
-    };
-  }
-});
-
-export const fetchCategories = cache(async () => {
-  try {
-    const res = await serverFetch.get("/category?isFeatured=true");
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch categories: ${res.statusText}`);
-    }
-
-    const result = await res.json();
-    console.log("API Result:", result);
-
-    if (!result.success) {
-      throw new Error(result.message || "Failed to fetch categories");
-    }
-
-    return {
-      success: true,
-      data: result.data as ICategory[],
-    };
-  } catch (error: any) {
-    console.error("Error fetching categories:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch categories",
       data: [],
     };
   }
