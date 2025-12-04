@@ -94,6 +94,12 @@ export interface IProduct {
   categories?: ICategory[]; // Flattened from productCategories
   averageRating?: number;
   reviewCount?: number;
+
+  _count?: {
+    productReviews: number;
+    wishlists: number;
+    // Add other counts if needed
+  };
 }
 
 // ProductCategory (Junction Table) - MATCHES YOUR SCHEMA

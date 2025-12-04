@@ -1,12 +1,12 @@
 "use client";
-
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { IProduct } from "@/types/product.interface";
 import { ShoppingBag } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { IProduct } from "@/types/product.interface";
+import { useState } from "react";
 import toast from "react-hot-toast";
-import QuantityButtons from "./QuantityButtons";
-import PriceFormatter from "./PriceFormatter";
+import QuantityButtons from "@/components/modules/Product/QuantityButtons";
+import PriceFormatter from "@/components/modules/Product/PriceFormatter";
 
 interface Props {
   product: IProduct;
@@ -14,36 +14,63 @@ interface Props {
 }
 
 const AddToCartButton = ({ product, className }: Props) => {
-  // const { addItem, getItemCount } = useStore();
-  // const itemCount = getItemCount(product?.id);
+  const [quantity, setQuantity] = useState(0);
   const isOutOfStock = product?.stock === 0;
 
-  // const handleAddToCart = () => {
-  //   if ((product?.stock as number) > itemCount) {
-  //     addItem(product);
-  //     toast.success(
-  //       `${product?.name?.substring(0, 12)}... added successfully!`
-  //     );
-  //   } else {
-  //     toast.error("Can not add more than available stock");
-  //   }
-  // };
+  const handleAddToCart = () => {
+    if (product?.stock > 0) {
+      setQuantity(1);
+      toast.success(`${product?.name?.substring(0, 12)}... added to cart!`);
+      // If using store: addItem(product);
+    } else {
+      toast.error("Product is out of stock");
+    }
+  };
+
+  const handleIncrease = () => {
+    if (quantity < product.stock) {
+      setQuantity((prev) => prev + 1);
+      toast.success("Quantity Increased successfully!");
+      // If using store: addItem(product);
+    } else {
+      toast.error("Cannot add more than available stock");
+    }
+  };
+
+  const handleDecrease = () => {
+    if (quantity > 1) {
+      setQuantity((prev) => prev - 1);
+      toast.success("Quantity Decreased successfully!");
+      // If using store: removeItem(product.id);
+    } else {
+      setQuantity(0);
+      toast.success(`${product?.name?.substring(0, 12)}... removed from cart!`);
+      // If using store: removeItem(product.id);
+    }
+  };
+
   return (
     <div className="w-full h-12 flex items-center">
-      {/* {itemCount ? ( */}
-      <div className="text-sm w-full">
-        <div className="flex items-center justify-between">
-          <span className="text-xs text-darkColor/80">Quantity</span>
-          <QuantityButtons product={product} />
+      {quantity > 0 ? (
+        <div className="text-sm w-full">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-darkColor/80">Quantity</span>
+            <QuantityButtons
+              product={product}
+              quantity={quantity}
+              onIncrease={handleIncrease}
+              onDecrease={handleDecrease}
+            />
+          </div>
+          <div className="flex items-center justify-between border-t pt-1 mt-1">
+            <span className="text-xs font-semibold">Subtotal</span>
+            <PriceFormatter
+              amount={product?.price * quantity}
+              className="text-sm"
+            />
+          </div>
         </div>
-        <div className="flex items-center justify-between border-t pt-1">
-          <span className="text-xs font-semibold">Subtotal</span>
-          <PriceFormatter
-            amount={0} // {product?.price ? product?.price * itemCount : 0}
-          />
-        </div>
-      </div>
-      {/* ) : (
+      ) : (
         <Button
           onClick={handleAddToCart}
           disabled={isOutOfStock}
@@ -54,7 +81,7 @@ const AddToCartButton = ({ product, className }: Props) => {
         >
           <ShoppingBag /> {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
-      )} */}
+      )}
     </div>
   );
 };

@@ -16,6 +16,7 @@ const PriceView = ({
   className,
 }: PriceViewProps) => {
   const hasDiscount = discount > 0;
+  // Use salePrice if provided, otherwise calculate it
   const finalPrice =
     salePrice || (hasDiscount ? price - (price * discount) / 100 : price);
 

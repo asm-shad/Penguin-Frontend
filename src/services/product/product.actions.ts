@@ -10,7 +10,6 @@ import {
 import { ProductStatusType } from "@/types/user.interface";
 import { cache } from "react";
 
-// Fetch all products with filtering and pagination
 export const fetchProducts = cache(async (filters?: IProductFilters) => {
   try {
     // Build query string from filters
@@ -65,7 +64,6 @@ export const fetchProducts = cache(async (filters?: IProductFilters) => {
   }
 });
 
-// Fetch featured products
 export const fetchFeaturedProducts = cache(async () => {
   try {
     const res = await serverFetch.get("/product/featured");
@@ -94,65 +92,74 @@ export const fetchFeaturedProducts = cache(async () => {
   }
 });
 
-// Fetch new arrival products
-export const fetchNewArrivals = cache(async () => {
-  try {
-    const res = await serverFetch.get("/product/new-arrivals");
+export const fetchProductsByStatus = cache(
+  async (status: string, options?: { limit?: number; page?: number }) => {
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch new arrivals: ${res.statusText}`);
+      // Add pagination options if provided
+      if (options?.limit) queryParams.append("limit", options.limit.toString());
+      if (options?.page) queryParams.append("page", options.page.toString());
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/product/status/${status}?${queryString}`
+        : `/product/status/${status}`;
+
+      const res = await serverFetch.get(endpoint);
+
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch products with status ${status}: ${res.statusText}`
+        );
+      }
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(
+          result.message || `Failed to fetch products with status ${status}`
+        );
+      }
+
+      return {
+        success: true,
+        data: result.data as IProduct[],
+        meta: result.meta,
+      };
+    } catch (error: any) {
+      console.error(`Error fetching products with status ${status}:`, error);
+      return {
+        success: false,
+        message:
+          error.message || `Failed to fetch products with status ${status}`,
+        data: [],
+        meta: undefined,
+      };
     }
-
-    const result = await res.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Failed to fetch new arrivals");
-    }
-
-    return {
-      success: true,
-      data: result.data as IProduct[],
-    };
-  } catch (error: any) {
-    console.error("Error fetching new arrivals:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch new arrivals",
-      data: [],
-    };
   }
+);
+
+export const fetchNewArrivals = cache(async (limit?: number) => {
+  return fetchProductsByStatus("NEW", { limit });
 });
 
-// Fetch products on sale
-export const fetchProductsOnSale = cache(async () => {
-  try {
-    const res = await serverFetch.get("/product/on-sale");
-
-    if (!res.ok) {
-      throw new Error(`Failed to fetch products on sale: ${res.statusText}`);
-    }
-
-    const result = await res.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Failed to fetch products on sale");
-    }
-
-    return {
-      success: true,
-      data: result.data as IProduct[],
-    };
-  } catch (error: any) {
-    console.error("Error fetching products on sale:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch products on sale",
-      data: [],
-    };
-  }
+export const fetchProductsOnSale = cache(async (limit?: number) => {
+  return fetchProductsByStatus("SALE", { limit });
 });
 
-// Fetch product by slug
+export const fetchHotProducts = cache(async (limit?: number) => {
+  return fetchProductsByStatus("HOT", { limit });
+});
+
+export const fetchOutOfStockProducts = cache(async (limit?: number) => {
+  return fetchProductsByStatus("OUT_OF_STOCK", { limit });
+});
+
+export const fetchDiscontinuedProducts = cache(async (limit?: number) => {
+  return fetchProductsByStatus("DISCONTINUED", { limit });
+});
+
 export const fetchProductBySlug = cache(async (slug: string) => {
   try {
     const res = await serverFetch.get(`/product/slug/${slug}`);
@@ -181,7 +188,6 @@ export const fetchProductBySlug = cache(async (slug: string) => {
   }
 });
 
-// Fetch product by ID
 export const fetchProductById = cache(async (id: string) => {
   try {
     const res = await serverFetch.get(`/product/${id}`);
@@ -210,7 +216,6 @@ export const fetchProductById = cache(async (id: string) => {
   }
 });
 
-// Create product (admin only)
 export const createProduct = cache(async (productData: FormData) => {
   try {
     const res = await serverFetch.post("/products", {
@@ -244,7 +249,6 @@ export const createProduct = cache(async (productData: FormData) => {
   }
 });
 
-// Update product (admin only)
 export const updateProduct = cache(
   async (id: string, productData: FormData) => {
     try {
@@ -277,7 +281,6 @@ export const updateProduct = cache(
   }
 );
 
-// Update product status (admin only)
 export const updateProductStatus = cache(
   async (
     id: string,
@@ -324,7 +327,6 @@ export const updateProductStatus = cache(
   }
 );
 
-// Update product featured status (admin only)
 export const updateProductFeatured = cache(
   async (id: string, isFeatured: boolean) => {
     try {
@@ -364,7 +366,6 @@ export const updateProductFeatured = cache(
   }
 );
 
-// Update product active status (admin only)
 export const updateProductActive = cache(
   async (id: string, isActive: boolean) => {
     try {
@@ -404,7 +405,6 @@ export const updateProductActive = cache(
   }
 );
 
-// Update product stock (admin only)
 export const updateProductStock = cache(
   async (id: string, stock: number, variantId?: string, reason?: string) => {
     try {
@@ -440,7 +440,6 @@ export const updateProductStock = cache(
   }
 );
 
-// Delete product (admin only - soft delete)
 export const deleteProduct = cache(async (id: string) => {
   try {
     const res = await serverFetch.delete(`/product/${id}`);
@@ -469,7 +468,6 @@ export const deleteProduct = cache(async (id: string) => {
   }
 });
 
-// Helper function to get active products for homepage
 export const fetchActiveProducts = cache(async (limit?: number) => {
   try {
     const filters: IProductFilters = {
@@ -490,7 +488,6 @@ export const fetchActiveProducts = cache(async (limit?: number) => {
   }
 });
 
-// Server-side function to fetch categories
 export const fetchCategories = cache(async () => {
   try {
     const res = await serverFetch.get("/category?isFeatured=true");

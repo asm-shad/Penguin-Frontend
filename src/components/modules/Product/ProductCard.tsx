@@ -1,140 +1,130 @@
 import Image from "next/image";
 import Link from "next/link";
-import { Flame, ShoppingBag, Eye, Heart, StarIcon } from "lucide-react";
-import { IProduct } from "@/types/product.interface";
+import { Flame } from "lucide-react";
+import { Star } from "lucide-react";
 import { Title } from "@/components/ui/text";
+import PriceView from "@/components/modules/Product/PriceView";
+import { IProduct } from "@/types/product.interface";
 import AddToCartButton from "./AddToCartButton";
-import PriceView from "./PriceView";
-import { ProductStatus, ProductStatusType } from "@/types/user.interface";
-import AddToWishlistButton from "./ProductSideMenu";
+import ProductSideMenu from "./ProductSideMenu";
 
 const ProductCard = ({ product }: { product: IProduct }) => {
-  // Get status badge text and style
-  const getStatusBadge = (status: ProductStatusType) => {
-    switch (status) {
-      case ProductStatus.SALE:
-        return { text: "Sale!", className: "bg-red-500 text-white" };
-      case ProductStatus.HOT:
-        return { text: "Hot", className: "bg-orange-500 text-white" };
-      case ProductStatus.NEW:
-        return { text: "New", className: "bg-green-500 text-white" };
-      case ProductStatus.OUT_OF_STOCK:
-        return { text: "Out of Stock", className: "bg-gray-500 text-white" };
-      default:
-        return null;
-    }
-  };
+  // Get primary image
+  const primaryImage =
+    product.productImages?.find((img) => img.isPrimary)?.imageUrl ||
+    product.productImages?.[0]?.imageUrl;
 
-  const statusBadge = getStatusBadge(product.status);
-  const isOutOfStock =
-    product.status === ProductStatus.OUT_OF_STOCK || product.stock === 0;
-  const primaryImage = product.primaryImage || "/images/placeholder.png";
+  // Get categories
+  const categories =
+    product.productCategories?.map((pc) => pc.category.name) || [];
+
+  // Safely get review count
+  const reviewCount = product._count?.productReviews || 0;
 
   return (
-    <div className="text-sm border rounded-md border-darkBlue/20 group bg-white hover:shadow-lg transition-shadow duration-300">
-      <div className="relative group overflow-hidden bg-shop_light_bg rounded-t-md">
-        <Link href={`/product/${product.slug}`}>
-          <div className="relative w-full h-64 bg-white">
+    <div className="text-sm border rounded-md border-darkBlue/20 group bg-white hover:shadow-lg transition-shadow">
+      <div className="relative group overflow-hidden bg-shop_light_bg">
+        {primaryImage && (
+          <Link href={`/products/${product?.slug}`}>
             <Image
               src={primaryImage}
               alt={product.name}
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 768px) 50vw, (max-width: 1024px) 33vw, 20vw"
-              className={`object-contain p-4 transition-transform duration-500 
-                ${!isOutOfStock ? "group-hover:scale-105" : "opacity-50"}`}
-              priority={true}
+              width={500}
+              height={500}
+              priority
+              className={`w-full h-64 object-contain overflow-hidden transition-transform bg-shop_light_bg duration-500 
+              ${product?.stock !== 0 ? "group-hover:scale-105" : "opacity-50"}`}
             />
-          </div>
-        </Link>
-
-        <AddToWishlistButton product={product} />
-
-        {statusBadge && (
-          <span
-            className={`absolute top-2 left-2 z-10 text-xs px-2 py-1 rounded-full ${statusBadge.className}`}
-          >
-            {statusBadge.text}
-          </span>
+          </Link>
         )}
 
-        {product.isFeatured && (
-          <span className="absolute top-2 right-2 z-10 text-xs bg-blue-500 text-white px-2 py-1 rounded-full">
-            Featured
-          </span>
+        {/* Wishlist button */}
+        <ProductSideMenu product={product} />
+
+        {/* Flame icon for HOT status */}
+        {product?.status === "HOT" && (
+          <div className="absolute top-2 left-2 z-10 border border-shop_orange/50 p-1 rounded-full group-hover:border-shop_orange hover:text-shop_dark_green hoverEffect bg-white/80">
+            <Flame
+              size={18}
+              fill="#fb6c08"
+              className="text-shop_orange/50 group-hover:text-shop_orange hoverEffect"
+            />
+          </div>
+        )}
+
+        {/* Sale badge */}
+        {product?.discount > 0 && (
+          <div className="absolute top-2 left-10 z-10 text-xs bg-red-500 text-white px-2 py-1 rounded-full font-semibold">
+            -{product.discount}%
+          </div>
         )}
       </div>
 
       <div className="p-3 flex flex-col gap-2">
         {/* Categories */}
-        {product.categories && product.categories.length > 0 && (
+        {categories.length > 0 && (
           <p className="uppercase line-clamp-1 text-xs font-medium text-lightText">
-            {product.categories.map((cat) => cat.name).join(", ")}
+            {categories.join(", ")}
           </p>
         )}
 
         {/* Product Name */}
-        <Title className="text-sm line-clamp-1 font-semibold hover:text-blue-600">
-          <Link href={`/product/${product.slug}`}>{product.name}</Link>
+        <Title className="text-sm line-clamp-1 hover:text-shop_dark_green transition-colors">
+          <Link href={`/products/${product?.slug}`}>{product?.name}</Link>
         </Title>
 
         {/* Brand */}
         {product.brand && (
-          <p className="text-xs text-gray-500">
-            Brand: <span className="font-medium">{product.brand.name}</span>
-          </p>
+          <p className="text-xs text-gray-500">{product.brand.name}</p>
         )}
 
         {/* Rating */}
-        <Title className="text-sm line-clamp-1">{product?.name}</Title>
         <div className="flex items-center gap-2">
           <div className="flex items-center">
             {[...Array(5)].map((_, index) => (
-              <StarIcon
-                size={13}
+              <Star
                 key={index}
-                className={
-                  index < 4
-                    ? "text-shop_lighter_green"
-                    : "text-shop_lighter_text"
-                }
+                className={index < 4 ? "text-yellow-400" : "text-gray-300"}
+                size={14}
                 fill={index < 4 ? "#fbbf24" : "#d1d5db"}
               />
             ))}
           </div>
           <p className="text-lightText text-xs tracking-wide">
-            ({product.reviewCount || 0} Reviews)
+            {reviewCount} Review{reviewCount !== 1 ? "s" : ""}
           </p>
         </div>
 
         {/* Stock Status */}
         <div className="flex items-center gap-2.5">
+          <div
+            className={`w-2 h-2 rounded-full ${
+              product?.stock > 0 ? "bg-green-500" : "bg-red-500"
+            }`}
+          ></div>
           <p
-            className={`font-medium ${
-              isOutOfStock ? "text-red-600" : "text-green-600"
+            className={`text-sm ${
+              product?.stock === 0
+                ? "text-red-600"
+                : "text-shop_dark_green/80 font-semibold"
             }`}
           >
-            {isOutOfStock ? "Out of Stock" : "In Stock"}
+            {product?.stock > 0 ? `${product?.stock} in stock` : "Out of Stock"}
           </p>
-          {!isOutOfStock && (
-            <p className="text-shop_dark_green/80 font-semibold">
-              {product.stock} units
-            </p>
-          )}
         </div>
 
         {/* Price */}
         <PriceView
-          price={product.price}
-          discount={product.discount}
-          salePrice={product.salePrice}
-          className="text-base"
+          price={product?.price}
+          discount={product?.discount}
+          salePrice={product?.salePrice}
+          className="text-sm"
         />
 
         {/* Add to Cart Button */}
         <AddToCartButton
           product={product}
-          className="w-full rounded-md mt-2"
-          // disabled={isOutOfStock}
+          className="w-full rounded-full mt-2"
         />
       </div>
     </div>
