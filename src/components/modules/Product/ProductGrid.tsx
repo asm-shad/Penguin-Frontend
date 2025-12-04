@@ -7,39 +7,24 @@ import HomeTabbar from "./HomeTabbar";
 import Container from "@/components/shared/Container";
 import NoProductAvailable from "./NoProductAvailable";
 import ProductCard from "./ProductCard";
-import { ICategory, IProduct } from "@/types/product.interface";
-import { fetchCategories } from "@/services/product/category.actions";
+import { IProduct } from "@/types/product.interface";
 import {
-  fetchProducts,
-  fetchProductsByStatus,
+  fetchNewArrivals,
+  fetchHotProducts,
+  fetchProductsOnSale,
 } from "@/services/product/product.actions";
 
-// Replace the hardcoded productType with dynamic categories
 const ProductGrid = () => {
   const [products, setProducts] = useState<IProduct[]>([]);
-  const [categories, setCategories] = useState<ICategory[]>([]);
   const [loading, setLoading] = useState(false);
-  const [selectedTab, setSelectedTab] = useState<string>("featured");
+  const [selectedTab, setSelectedTab] = useState<string>("new");
 
-  // Fetch categories on component mount
-  useEffect(() => {
-    const loadCategories = async () => {
-      try {
-        const result = await fetchCategories({
-          limit: 6,
-          sortBy: "name",
-          sortOrder: "asc",
-        });
-        if (result.success) {
-          setCategories(result.data);
-        }
-      } catch (error) {
-        console.error("Error fetching categories:", error);
-      }
-    };
-
-    loadCategories();
-  }, []);
+  // Prepare tabs for tabbar
+  const productTabs = [
+    { id: "new", title: "New Arrivals", slug: "new" },
+    { id: "hot", title: "Hot Deals", slug: "hot" },
+    { id: "sale", title: "On Sale", slug: "sale" },
+  ];
 
   // Fetch products when tab changes
   useEffect(() => {
@@ -49,47 +34,26 @@ const ProductGrid = () => {
         let result;
 
         // Handle different tabs
-        if (selectedTab === "featured") {
-          // Fetch featured products
-          result = await fetchProducts({ isFeatured: true, limit: 10 });
-        } else if (selectedTab === "new") {
-          // Fetch new arrivals
-          result = await fetchProductsByStatus("NEW", { limit: 10 });
-        } else if (selectedTab === "hot") {
-          // Fetch hot products
-          result = await fetchProductsByStatus("HOT", { limit: 10 });
-        } else if (selectedTab === "sale") {
-          // Fetch products on sale
-          result = await fetchProductsByStatus("SALE", { limit: 10 });
-        } else if (selectedTab === "all") {
-          // Fetch all active products
-          result = await fetchProducts({
-            isActive: true,
-            limit: 10,
-            sortBy: "createdAt",
-            sortOrder: "desc",
-          });
-        } else {
-          // Fetch products by category
-          const category = categories.find(
-            (cat) => cat.id === selectedTab || cat.slug === selectedTab
-          );
-          if (category) {
-            result = await fetchProducts({
-              category: category.id,
-              isActive: true,
-              limit: 10,
-            });
-          } else {
-            // Fallback to featured products
-            result = await fetchProducts({ isFeatured: true, limit: 10 });
-          }
+        switch (selectedTab) {
+          case "new":
+            result = await fetchNewArrivals(10); // Fetch new arrivals, limit 10
+            break;
+          case "hot":
+            result = await fetchHotProducts(10); // Fetch hot products, limit 10
+            break;
+          case "sale":
+            result = await fetchProductsOnSale(10); // Fetch sale products, limit 10
+            break;
+          default:
+            result = await fetchNewArrivals(10); // Default to new arrivals
+            break;
         }
 
         if (result.success) {
           setProducts(result.data || []);
         } else {
           setProducts([]);
+          console.error("Failed to fetch products:", result.message);
         }
       } catch (error) {
         console.error("Error fetching products:", error);
@@ -100,30 +64,20 @@ const ProductGrid = () => {
     };
 
     loadProducts();
-  }, [selectedTab, categories]);
-
-  // Prepare tabs for tabbar - ADD SLUG PROPERTY
-  const productTabs = [
-    { id: "featured", title: "Featured", icon: "⭐", slug: "featured" },
-    { id: "new", title: "New Arrivals", icon: "🆕", slug: "new" },
-    { id: "hot", title: "Hot Deals", icon: "🔥", slug: "hot" },
-    { id: "sale", title: "On Sale", icon: "💰", slug: "sale" },
-    { id: "all", title: "All Products", icon: "📦", slug: "all" },
-  ];
+  }, [selectedTab]);
 
   return (
     <div className="py-10 bg-gray-50">
       <Container className="flex flex-col lg:px-0">
-        <div className="mb-8 text-center">
+        {/* <div className="mb-8 text-center">
           <h2 className="text-3xl md:text-4xl font-bold mb-4">
-            Our Featured Products
+            Featured Products
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Discover our carefully curated selection of premium products. From
-            the latest trends to timeless classics, find something perfect for
-            you.
+            the latest trends to timeless classics.
           </p>
-        </div>
+        </div> */}
 
         <HomeTabbar
           selectedTab={selectedTab}
@@ -142,50 +96,41 @@ const ProductGrid = () => {
             </p>
           </div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-10">
-            <AnimatePresence mode="wait">
-              {products.map((product) => (
-                <motion.div
-                  key={product.id}
-                  layout
-                  initial={{ opacity: 0.2, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <ProductCard product={product} />
-                </motion.div>
-              ))}
-            </AnimatePresence>
-          </div>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-10">
+              <AnimatePresence mode="wait">
+                {products.map((product) => (
+                  <motion.div
+                    key={product.id}
+                    layout
+                    initial={{ opacity: 0.2, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -20 }}
+                    transition={{ duration: 0.3 }}
+                  >
+                    <ProductCard product={product} />
+                  </motion.div>
+                ))}
+              </AnimatePresence>
+            </div>
+
+            {/* Show status badge */}
+            {/* {selectedTab && (
+              <div className="mt-6 text-center">
+                <span className="inline-block px-3 py-1 text-sm font-medium bg-shop_dark_green/10 text-shop_dark_green rounded-full">
+                  Showing {products.length}{" "}
+                  {selectedTab === "new"
+                    ? "New Arrival"
+                    : selectedTab === "hot"
+                    ? "Hot Deal"
+                    : "On Sale"}{" "}
+                  products
+                </span>
+              </div>
+            )} */}
+          </>
         ) : (
           <NoProductAvailable selectedTab={selectedTab} />
-        )}
-
-        {/* View All Button */}
-        {products.length > 0 && (
-          <div className="mt-10 text-center">
-            <button
-              onClick={() => setSelectedTab("all")}
-              className="inline-flex items-center gap-2 px-6 py-3 bg-shop_dark_green text-white rounded-full hover:bg-shop_dark_green/90 transition-colors font-medium"
-            >
-              View All Products
-              <svg
-                className="w-4 h-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </button>
-          </div>
         )}
       </Container>
     </div>

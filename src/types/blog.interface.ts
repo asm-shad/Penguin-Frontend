@@ -1,5 +1,3 @@
-// Add to existing product.interface.ts
-
 // Blog Types
 export interface IBlogUser {
   id: string;

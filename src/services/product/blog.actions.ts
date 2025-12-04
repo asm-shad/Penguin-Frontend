@@ -2,7 +2,11 @@
 "use server";
 
 import { serverFetch } from "@/lib/server-fetch";
-import { IBlogPost, IBlogPostFilters } from "@/types/blog.interface";
+import {
+  IBlogCategory,
+  IBlogPost,
+  IBlogPostFilters,
+} from "@/types/blog.interface";
 import { cache } from "react";
 
 // Fetch all blog posts (with pagination and filters)
@@ -171,6 +175,65 @@ export const fetchFeaturedBlogPosts = cache(async (limit: number = 3) => {
       success: false,
       message: error.message || "Failed to fetch featured blog posts",
       data: [],
+    };
+  }
+});
+
+export const fetchBlogCategories = cache(async () => {
+  try {
+    const res = await serverFetch.get("/blog-category");
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch blog categories: ${res.statusText}`);
+    }
+
+    const result = await res.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "Failed to fetch blog categories");
+    }
+
+    return {
+      success: true,
+      data: result.data as (IBlogCategory & {
+        _count?: { blogPosts: number };
+      })[],
+    };
+  } catch (error: any) {
+    console.error("Error fetching blog categories:", error);
+    return {
+      success: false,
+      message: error.message || "Failed to fetch blog categories",
+      data: [],
+    };
+  }
+});
+
+// Fetch blog category by slug
+export const fetchBlogCategoryBySlug = cache(async (slug: string) => {
+  try {
+    const res = await serverFetch.get(`/blog-category/slug/${slug}`);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch blog category: ${res.statusText}`);
+    }
+
+    const result = await res.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "Failed to fetch blog category");
+    }
+
+    return {
+      success: true,
+      data: result.data as IBlogCategory,
+    };
+  } catch (error: any) {
+    console.error("Error fetching blog category:", error);
+    return {
+      success: false,
+      message: error.message || "Failed to fetch blog category",
+      data: null,
     };
   }
 });

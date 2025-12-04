@@ -15,6 +15,7 @@ import BrandList from "./BrandList";
 import PriceList from "./PriceList";
 import ProductCard from "../Product/ProductCard";
 import NoProductAvailable from "../Product/NoProductAvailable";
+import Pagination from "@/components/shared/Pagination";
 import { fetchProducts } from "@/services/product/product.actions";
 
 interface Props {
@@ -27,6 +28,7 @@ const Shop = ({ categories, brands }: Props) => {
   const brandParams = searchParams?.get("brand");
   const categoryParams = searchParams?.get("category");
   const priceParams = searchParams?.get("price");
+  const pageParams = searchParams?.get("page");
 
   const [products, setProducts] = useState<IProduct[]>([]);
   const [loading, setLoading] = useState(false);
@@ -39,13 +41,21 @@ const Shop = ({ categories, brands }: Props) => {
   const [selectedPrice, setSelectedPrice] = useState<string | null>(
     priceParams || null
   );
+  const [currentPage, setCurrentPage] = useState<number>(
+    pageParams ? parseInt(pageParams) : 1
+  );
+  const [totalPages, setTotalPages] = useState<number>(1);
+  const [totalProducts, setTotalProducts] = useState<number>(0);
+  const [itemsPerPage, setItemsPerPage] = useState<number>(12);
 
-  // Build filters object - memoized
+  // Build filters object
   const buildFilters = useCallback((): IProductFilters => {
     const filters: IProductFilters = {
       isActive: true,
       sortBy: "name",
       sortOrder: "asc",
+      page: currentPage,
+      limit: itemsPerPage,
     };
 
     if (selectedCategory) {
@@ -69,9 +79,17 @@ const Shop = ({ categories, brands }: Props) => {
     }
 
     return filters;
-  }, [selectedCategory, selectedBrand, selectedPrice, categories, brands]);
+  }, [
+    selectedCategory,
+    selectedBrand,
+    selectedPrice,
+    currentPage,
+    itemsPerPage,
+    categories,
+    brands,
+  ]);
 
-  // Fetch products function - memoized
+  // Fetch products function
   const fetchShopProducts = useCallback(async () => {
     setLoading(true);
     try {
@@ -80,53 +98,74 @@ const Shop = ({ categories, brands }: Props) => {
 
       if (result.success && result.data) {
         setProducts(result.data);
+        if (result.meta) {
+          setTotalProducts(result.meta.total || 0);
+          setTotalPages(Math.ceil((result.meta.total || 0) / itemsPerPage));
+          setItemsPerPage(result.meta.limit || 10);
+          // Ensure current page is valid
+          if (result.meta.page && result.meta.page !== currentPage) {
+            setCurrentPage(result.meta.page);
+          }
+        }
       } else {
         setProducts([]);
+        setTotalPages(1);
+        setTotalProducts(0);
       }
     } catch (error) {
       console.log("Shop product fetching Error", error);
       setProducts([]);
+      setTotalPages(1);
+      setTotalProducts(0);
     } finally {
       setLoading(false);
     }
-  }, [buildFilters]); // Now depends on buildFilters which is memoized
+  }, [buildFilters, currentPage, itemsPerPage]);
 
-  // Update URL when filters change - memoized
+  // Update URL when filters change
   const updateURL = useCallback(() => {
     const params = new URLSearchParams();
 
     if (selectedCategory) params.set("category", selectedCategory);
     if (selectedBrand) params.set("brand", selectedBrand);
     if (selectedPrice) params.set("price", selectedPrice);
+    if (currentPage > 1) params.set("page", currentPage.toString());
 
     const queryString = params.toString();
     const newUrl = queryString ? `/shop?${queryString}` : "/shop";
 
     window.history.pushState({}, "", newUrl);
-  }, [selectedCategory, selectedBrand, selectedPrice]);
+  }, [selectedCategory, selectedBrand, selectedPrice, currentPage]);
 
   // Handle initial URL params
   useEffect(() => {
     if (categoryParams) setSelectedCategory(categoryParams);
     if (brandParams) setSelectedBrand(brandParams);
     if (priceParams) setSelectedPrice(priceParams);
-  }, [brandParams, categoryParams, priceParams]);
+    if (pageParams) setCurrentPage(parseInt(pageParams));
+  }, [brandParams, categoryParams, priceParams, pageParams]);
 
   // Fetch products when filters change
   useEffect(() => {
     fetchShopProducts();
-  }, [fetchShopProducts]); // fetchShopProducts is now memoized
+  }, [fetchShopProducts]);
 
   // Update URL when filters change
   useEffect(() => {
     updateURL();
-  }, [updateURL]); // updateURL is now memoized
+  }, [updateURL]);
 
   // Reset all filters
   const handleResetFilters = () => {
     setSelectedCategory(null);
     setSelectedBrand(null);
     setSelectedPrice(null);
+    setCurrentPage(1);
+  };
+
+  // Handle page change
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
   };
 
   // Get selected category and brand names for display
@@ -142,7 +181,7 @@ const Shop = ({ categories, brands }: Props) => {
     <div className="border-t">
       <Container className="mt-5">
         <div className="sticky top-0 z-10 mb-5 bg-white pb-3">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <Title className="text-lg uppercase tracking-wide">
                 Get the products as your needs
@@ -176,7 +215,7 @@ const Shop = ({ categories, brands }: Props) => {
               selectedPrice !== null) && (
               <button
                 onClick={handleResetFilters}
-                className="text-shop_dark_green underline text-sm mt-2 font-medium hover:text-darkRed hoverEffect whitespace-nowrap"
+                className="text-shop_dark_green underline text-sm font-medium hover:text-darkRed hoverEffect whitespace-nowrap self-start md:self-center"
               >
                 Reset All Filters
               </button>
@@ -190,50 +229,66 @@ const Shop = ({ categories, brands }: Props) => {
             <CategoryList
               categories={categories}
               selectedCategory={selectedCategory}
-              setSelectedCategory={setSelectedCategory}
+              setSelectedCategory={(category) => {
+                setSelectedCategory(category);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
             />
             <BrandList
               brands={brands}
-              setSelectedBrand={setSelectedBrand}
+              setSelectedBrand={(brand) => {
+                setSelectedBrand(brand);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
               selectedBrand={selectedBrand}
             />
             <PriceList
-              setSelectedPrice={setSelectedPrice}
+              setSelectedPrice={(price) => {
+                setSelectedPrice(price);
+                setCurrentPage(1); // Reset to first page when filter changes
+              }}
               selectedPrice={selectedPrice}
             />
           </div>
 
           {/* Products Grid */}
           <div className="flex-1 pt-5">
-            <div className="h-[calc(100vh-160px)] overflow-y-auto pr-2 scrollbar-hide">
+            <div className="min-h-[calc(100vh-160px)] flex flex-col">
               {loading ? (
-                <div className="p-20 flex flex-col gap-2 items-center justify-center bg-white">
+                <div className="flex-1 p-20 flex flex-col gap-2 items-center justify-center bg-white">
                   <Loader2 className="w-10 h-10 text-shop_dark_green animate-spin" />
                   <p className="font-semibold tracking-wide text-base">
                     Loading products...
                   </p>
                 </div>
               ) : products.length > 0 ? (
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5">
-                  {products.map((product) => (
-                    <ProductCard key={product.id} product={product} />
-                  ))}
-                </div>
+                <>
+                  {/* Products Grid */}
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2.5 mb-6">
+                    {products.map((product) => (
+                      <ProductCard key={product.id} product={product} />
+                    ))}
+                  </div>
+
+                  {/* Pagination Component */}
+                  <div className="mt-auto pt-6 border-t mb-4">
+                    <Pagination
+                      currentPage={currentPage}
+                      totalPages={totalPages}
+                      totalItems={totalProducts}
+                      itemsPerPage={itemsPerPage}
+                      onPageChange={handlePageChange}
+                      isLoading={loading}
+                    />
+                  </div>
+                </>
               ) : (
                 <NoProductAvailable
-                  className="bg-white mt-0"
+                  className="bg-white mt-0 flex-1"
                   selectedTab={
                     selectedCategoryName || selectedBrandName || "shop"
                   }
                 />
-              )}
-
-              {/* Results count */}
-              {!loading && products.length > 0 && (
-                <div className="mt-4 pt-4 border-t text-sm text-gray-600">
-                  Showing {products.length} product
-                  {products.length !== 1 ? "s" : ""}
-                </div>
               )}
             </div>
           </div>
