@@ -1,12 +1,12 @@
 "use client";
 import { cn } from "@/lib/utils";
 import { ShoppingBag } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { IProduct } from "@/types/product.interface";
-import { useState } from "react";
 import toast from "react-hot-toast";
-import QuantityButtons from "@/components/modules/Product/QuantityButtons";
-import PriceFormatter from "@/components/modules/Product/PriceFormatter";
+import PriceFormatter from "./PriceFormatter";
+import { IProduct } from "@/types/product.interface";
+import useStore from "../../../../store";
+import QuantityButtons from "./QuantityButtons";
+import { Button } from "@/components/ui/button";
 
 interface Props {
   product: IProduct;
@@ -14,59 +14,57 @@ interface Props {
 }
 
 const AddToCartButton = ({ product, className }: Props) => {
-  const [quantity, setQuantity] = useState(0);
+  const { addItem, getItemCount, removeItem, deleteCartProduct } = useStore();
+  const itemCount = getItemCount(product?.id);
   const isOutOfStock = product?.stock === 0;
 
   const handleAddToCart = () => {
     if (product?.stock > 0) {
-      setQuantity(1);
       toast.success(`${product?.name?.substring(0, 12)}... added to cart!`);
-      // If using store: addItem(product);
+      addItem(product);
     } else {
       toast.error("Product is out of stock");
     }
   };
 
   const handleIncrease = () => {
-    if (quantity < product.stock) {
-      setQuantity((prev) => prev + 1);
+    if (itemCount < product.stock) {
       toast.success("Quantity Increased successfully!");
-      // If using store: addItem(product);
+      addItem(product);
     } else {
       toast.error("Cannot add more than available stock");
     }
   };
 
   const handleDecrease = () => {
-    if (quantity > 1) {
-      setQuantity((prev) => prev - 1);
-      toast.success("Quantity Decreased successfully!");
-      // If using store: removeItem(product.id);
+    if (itemCount > 1) {
+      removeItem(product.id);
+      toast.success("Quantity decreased!");
     } else {
-      setQuantity(0);
+      // When it's 1 and user clicks decrease, remove the item
+      deleteCartProduct(product.id);
       toast.success(`${product?.name?.substring(0, 12)}... removed from cart!`);
-      // If using store: removeItem(product.id);
     }
   };
 
   return (
     <div className="w-full h-12 flex items-center">
-      {quantity > 0 ? (
+      {itemCount > 0 ? (
         <div className="text-sm w-full">
           <div className="flex items-center justify-between">
             <span className="text-xs text-darkColor/80">Quantity</span>
             <QuantityButtons
               product={product}
-              quantity={quantity}
+              quantity={itemCount}
               onIncrease={handleIncrease}
               onDecrease={handleDecrease}
             />
           </div>
-          <div className="flex items-center justify-between border-t pt-1 mt-1">
+
+          <div className="flex items-center justify-between border-t pt-1">
             <span className="text-xs font-semibold">Subtotal</span>
             <PriceFormatter
-              amount={product?.price * quantity}
-              className="text-sm"
+              amount={product?.price ? product?.price * itemCount : 0}
             />
           </div>
         </div>
@@ -79,7 +77,8 @@ const AddToCartButton = ({ product, className }: Props) => {
             className
           )}
         >
-          <ShoppingBag /> {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+          <ShoppingBag />
+          {isOutOfStock ? "Out of Stock" : "Add to Cart"}
         </Button>
       )}
     </div>

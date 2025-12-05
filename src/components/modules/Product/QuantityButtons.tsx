@@ -3,7 +3,7 @@ import { Minus, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { IProduct } from "@/types/product.interface";
-// import useStore from "@/store"; // If you have a cart store
+import useStore from "../../../../store";
 
 interface Props {
   product: IProduct;
@@ -16,36 +16,12 @@ interface Props {
 const QuantityButtons = ({
   product,
   className,
-  quantity,
   onIncrease,
   onDecrease,
 }: Props) => {
-  // If you're using a store, uncomment this:
-  // const { addItem, removeItem, getItemCount } = useStore();
-  // const itemCount = getItemCount(product?.id);
-
+  const { getItemCount } = useStore();
+  const itemCount = getItemCount(product?.id);
   const isOutOfStock = product?.stock === 0;
-
-  // If using store, uncomment these:
-  /*
-  const handleRemoveProduct = () => {
-    removeItem(product?.id);
-    if (itemCount > 1) {
-      toast.success("Quantity Decreased successfully!");
-    } else {
-      toast.success(`${product?.name?.substring(0, 12)} removed successfully!`);
-    }
-  };
-
-  const handleAddToCart = () => {
-    if (product?.stock > itemCount) {
-      addItem(product);
-      toast.success("Quantity Increased successfully!");
-    } else {
-      toast.error("Cannot add more than available stock");
-    }
-  };
-  */
 
   return (
     <div className={cn("flex items-center gap-1 pb-1 text-base", className)}>
@@ -53,19 +29,21 @@ const QuantityButtons = ({
         onClick={onDecrease}
         variant="outline"
         size="icon"
-        disabled={quantity === 0 || isOutOfStock}
+        disabled={isOutOfStock} // Changed to 1 to prevent going below 0
         className="w-6 h-6 border hover:bg-shop_dark_green/20 hoverEffect"
       >
         <Minus />
       </Button>
+
       <span className="font-semibold text-sm w-6 text-center text-darkColor">
-        {quantity}
+        {itemCount}
       </span>
+
       <Button
         onClick={onIncrease}
         variant="outline"
         size="icon"
-        disabled={isOutOfStock}
+        disabled={isOutOfStock || itemCount >= product.stock} // Added stock check
         className="w-6 h-6 border hover:bg-shop_dark_green/20 hoverEffect"
       >
         <Plus />

@@ -20,16 +20,19 @@ const LatestBlog = async () => {
             key={blog.id}
             className="rounded-lg overflow-hidden flex flex-col h-full border border-gray-200 hover:shadow-lg transition-shadow duration-300"
           >
-            {/* Image Container with Fixed Height */}
-            <div className="relative h-48 w-full overflow-hidden">
+            {/* Image Container with Fixed Height and Relative Positioning */}
+            <div className="relative h-48 w-full overflow-hidden group">
               {blog.featuredImageUrl ? (
-                <Link href={`/blog/${blog.slug}`}>
+                <Link
+                  href={`/blog/${blog.slug}`}
+                  className="relative block h-full w-full"
+                >
                   <Image
                     src={blog.featuredImageUrl}
                     alt={blog.title}
                     fill
                     sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 25vw"
-                    className="object-cover hover:scale-105 transition-transform duration-300"
+                    className="object-cover group-hover:scale-105 transition-transform duration-300"
                     priority={false}
                   />
                 </Link>
