@@ -179,35 +179,59 @@ export const fetchFeaturedBlogPosts = cache(async (limit: number = 3) => {
   }
 });
 
-export const fetchBlogCategories = cache(async () => {
-  try {
-    const res = await serverFetch.get("/blog-category");
+// services/blog/blog-category.actions.ts
+export const fetchBlogCategories = cache(
+  async (options?: {
+    searchTerm?: string;
+    limit?: number;
+    page?: number;
+    sortBy?: string;
+    sortOrder?: "asc" | "desc";
+  }) => {
+    try {
+      const queryParams = new URLSearchParams();
 
-    if (!res.ok) {
-      throw new Error(`Failed to fetch blog categories: ${res.statusText}`);
+      if (options?.searchTerm)
+        queryParams.append("searchTerm", options.searchTerm);
+      if (options?.limit) queryParams.append("limit", options.limit.toString());
+      if (options?.page) queryParams.append("page", options.page.toString());
+      if (options?.sortBy) queryParams.append("sortBy", options.sortBy);
+      if (options?.sortOrder)
+        queryParams.append("sortOrder", options.sortOrder);
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString ? `/blog-category?${queryString}` : "/blog-category";
+
+      const res = await serverFetch.get(endpoint);
+
+      if (!res.ok) {
+        throw new Error(`Failed to fetch blog categories: ${res.statusText}`);
+      }
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(result.message || "Failed to fetch blog categories");
+      }
+
+      return {
+        success: true,
+        data: result.data as (IBlogCategory & {
+          _count?: { blogPosts: number };
+          createdAt?: string;
+        })[],
+        meta: result.meta, // Make sure your API returns meta info
+      };
+    } catch (error: any) {
+      console.error("Error fetching blog categories:", error);
+      return {
+        success: false,
+        message: error.message || "Failed to fetch blog categories",
+        data: [],
+      };
     }
-
-    const result = await res.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Failed to fetch blog categories");
-    }
-
-    return {
-      success: true,
-      data: result.data as (IBlogCategory & {
-        _count?: { blogPosts: number };
-      })[],
-    };
-  } catch (error: any) {
-    console.error("Error fetching blog categories:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch blog categories",
-      data: [],
-    };
   }
-});
+);
 
 // Fetch blog category by slug
 export const fetchBlogCategoryBySlug = cache(async (slug: string) => {

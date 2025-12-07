@@ -11,6 +11,11 @@ export interface IBlogCategory {
   name: string;
   slug: string;
   description?: string;
+  createdAt: Date | string;
+  updatedAt?: Date | string;
+  _count?: {
+    blogPostCategories: number;
+  };
 }
 
 export interface IBlogPostCategory {

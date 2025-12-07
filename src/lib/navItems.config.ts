@@ -451,27 +451,21 @@ export const catalogManagementNavItems: NavSection[] = [
       // Categories
       {
         title: "Product Categories",
-        href: "/admin/categories",
+        href: "/admin/dashboard/category-management",
         icon: "Layers",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Add Category",
-        href: "/admin/categories/add",
-        icon: "FolderPlus",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
       // Brands
       {
-        title: "Brands",
-        href: "/admin/brands",
+        title: "Product Brands",
+        href: "/admin/dashboard/brand-management",
         icon: "Tag",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
       {
-        title: "Add Brand",
-        href: "/admin/brands/add",
-        icon: "TagPlus",
+        title: "Blog Categories",
+        href: "/admin/dashboard/blogCategory-management",
+        icon: "ListTree",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
     ],

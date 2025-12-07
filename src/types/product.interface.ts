@@ -30,6 +30,9 @@ export interface IBrand {
   updatedAt: Date;
   // Relations
   products?: IProduct[];
+  _count?: {
+    products: number;
+  };
 }
 
 export interface IProductImage {
