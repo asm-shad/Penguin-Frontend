@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 import { IProduct } from "@/types/product.interface";
 import { Heart } from "lucide-react";
@@ -16,7 +17,7 @@ const FavoriteButton = ({
   const { favoriteProduct, addToFavorite } = useStore();
 
   const isFavorite = product?.id
-    ? favoriteProduct.some((item) => item?.id === product.id)
+    ? favoriteProduct.some((item: any) => item?.id === product.id)
     : false;
 
   const handleFavorite = (e: React.MouseEvent<HTMLSpanElement>) => {
@@ -35,7 +36,7 @@ const FavoriteButton = ({
             }
           );
         })
-        .catch((error) => {
+        .catch((error: any) => {
           toast.error("Failed to update favorites");
           console.error("Favorite error:", error);
         });

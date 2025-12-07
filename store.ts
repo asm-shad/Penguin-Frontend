@@ -1,15 +1,17 @@
-import { IProduct } from "@/types/product.interface";
+import { IProduct, IProductVariant } from "@/types/product.interface";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 
 export interface CartItem {
   product: IProduct;
   quantity: number;
+  selectedVariant?: IProductVariant;
 }
 
 interface StoreState {
+  // Cart
   items: CartItem[];
-  addItem: (product: IProduct) => void;
+  addItem: (product: IProduct, variant?: IProductVariant) => void;
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
   resetCart: () => void;
@@ -17,7 +19,8 @@ interface StoreState {
   getSubTotalPrice: () => number;
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
-  // favorite
+  
+  // Favorites
   favoriteProduct: IProduct[];
   addToFavorite: (product: IProduct) => Promise<void>;
   removeFromFavorite: (productId: string) => void;
@@ -27,26 +30,29 @@ interface StoreState {
 const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
+      // Cart
       items: [],
-      favoriteProduct: [],
-
-      addItem: (product) =>
+      
+      addItem: (product, variant) =>
         set((state) => {
           const existingItem = state.items.find(
-            (item) => item.product.id === product.id
+            (item) => 
+              item.product.id === product.id && 
+              item.selectedVariant?.id === variant?.id
           );
 
           if (existingItem) {
             return {
               items: state.items.map((item) =>
-                item.product.id === product.id
+                item.product.id === product.id && 
+                item.selectedVariant?.id === variant?.id
                   ? { ...item, quantity: item.quantity + 1 }
                   : item
               ),
             };
           } else {
             return {
-              items: [...state.items, { product, quantity: 1 }],
+              items: [...state.items, { product, quantity: 1, selectedVariant: variant }],
             };
           }
         }),
@@ -67,23 +73,23 @@ const useStore = create<StoreState>()(
 
       deleteCartProduct: (productId) =>
         set((state) => ({
-          items: state.items.filter(({ product }) => product?.id !== productId),
+          items: state.items.filter((item) => item.product.id !== productId),
         })),
 
       resetCart: () => set({ items: [] }),
 
       getTotalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + (item.product.price ?? 0) * item.quantity,
+          (total, item) => total + (item.selectedVariant?.price || item.product.price || 0) * item.quantity,
           0
         );
       },
 
       getSubTotalPrice: () => {
         return get().items.reduce((total, item) => {
-          const price = item.product.price ?? 0;
-          const discount = ((item.product.discount ?? 0) * price) / 100;
-          const discountedPrice = price - discount; // FIXED: Should subtract discount
+          const basePrice = item.selectedVariant?.price || item.product.price || 0;
+          const discount = ((item.product.discount || 0) * basePrice) / 100;
+          const discountedPrice = basePrice - discount;
           return total + discountedPrice * item.quantity;
         }, 0);
       },
@@ -95,6 +101,9 @@ const useStore = create<StoreState>()(
 
       getGroupedItems: () => get().items,
 
+      // Favorites
+      favoriteProduct: [],
+      
       addToFavorite: (product: IProduct) => {
         return new Promise<void>((resolve) => {
           set((state: StoreState) => {

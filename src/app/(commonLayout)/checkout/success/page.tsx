@@ -1,198 +1,162 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Loader2, CheckCircle, XCircle, AlertCircle } from "lucide-react";
-import { getOrderById } from "@/services/order/order.actions";
+import { useSearchParams } from "next/navigation";
+import { Suspense, useEffect } from "react";
+import { motion } from "motion/react";
+import { Check, Home, Package, ShoppingBag } from "lucide-react";
+import Link from "next/link";
+import useStore from "../../../../../store";
 
-export default function StripeSuccessPage() {
+const SuccessPageContent = () => {
+  const { resetCart } = useStore();
   const searchParams = useSearchParams();
-  const router = useRouter();
+  
+  // Backend sends these parameters
   const sessionId = searchParams.get("session_id");
   const orderId = searchParams.get("order_id");
-  
-  const [status, setStatus] = useState<'loading' | 'success' | 'error' | 'pending'>('loading');
-  const [message, setMessage] = useState<string>('');
-  const [order, setOrder] = useState<any>(null);
-  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
-    const verifyPayment = async () => {
-      if (!sessionId || !orderId) {
-        setStatus('error');
-        setMessage('Missing payment information');
-        return;
-      }
+    // Clear cart immediately when page loads
+    resetCart();
+    
+    // Log for debugging
+    console.log("Success page loaded with:", {
+      sessionId,
+      orderId,
+      timestamp: new Date().toISOString()
+    });
+  }, [resetCart, sessionId, orderId]);
 
-      try {
-        // First, try to get updated order status
-        const orderResult = await getOrderById(orderId);
-        
-        if (orderResult.success) {
-          const orderData = orderResult.data;
-          setOrder(orderData);
-          
-          // Check if payment is already processed
-          if (orderData.status === 'PAID' || orderData.status === 'COMPLETED') {
-            setStatus('success');
-            setMessage('Payment successful!');
-            return;
-          }
-          
-          if (orderData.status === 'FAILED' || orderData.status === 'CANCELLED') {
-            setStatus('error');
-            setMessage(`Payment ${orderData.status.toLowerCase()}`);
-            return;
-          }
-        }
-
-        // If still pending, poll for status
-        if (retryCount < 10) { // Max 10 retries
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            verifyPayment();
-          }, 2000); // Retry every 2 seconds
-        } else {
-          setStatus('error');
-          setMessage('Payment verification timeout. Please check your email or contact support.');
-        }
-      } catch (error: any) {
-        console.error('Payment verification error:', error);
-        
-        if (retryCount < 5) {
-          setRetryCount(prev => prev + 1);
-          setTimeout(() => {
-            verifyPayment();
-          }, 3000);
-        } else {
-          setStatus('error');
-          setMessage('Unable to verify payment. Please contact support.');
-        }
-      }
-    };
-
-    verifyPayment();
-  }, [sessionId, orderId, retryCount]);
-
-  // Update your backend success URL in CartPage:
-  const successUrl = `${window.location.origin}/checkout/success?session_id={CHECKOUT_SESSION_ID}&order_id=${order.id}`;
-  const cancelUrl = `${window.location.origin}/checkout/cancelled?order_id=${order.id}`;
-
-  const handleContactSupport = () => {
-    // Implement support contact logic
-    console.log('Contact support');
-  };
-
-  const renderContent = () => {
-    switch (status) {
-      case 'loading':
-        return (
-          <div className="text-center">
-            <Loader2 className="h-12 w-12 animate-spin text-primary mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Verifying Payment</h2>
-            <p className="text-gray-600">Please wait while we confirm your payment...</p>
-            <p className="text-sm text-gray-500 mt-2">Attempt {retryCount + 1} of 10</p>
-          </div>
-        );
-      
-      case 'success':
-        return (
-          <div className="text-center">
-            <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-            <h2 className="text-3xl font-bold mb-2">Payment Successful!</h2>
-            <p className="text-gray-600 mb-6">
-              Thank you for your order. Your payment has been confirmed.
-            </p>
-            
-            {order && (
-              <div className="bg-white p-6 rounded-lg shadow-md max-w-md mx-auto mb-6">
-                <h3 className="text-xl font-semibold mb-4">Order Details</h3>
-                <div className="space-y-2 text-left">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Order Number:</span>
-                    <span className="font-semibold">{order.orderNumber}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Total:</span>
-                    <span className="font-semibold">${order.totalPrice.toFixed(2)}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Status:</span>
-                    <span className="font-semibold text-green-600">{order.status}</span>
-                  </div>
-                </div>
-              </div>
-            )}
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button 
-                onClick={() => router.push(`/orders/${orderId}`)}
-                className="min-w-[200px]"
-              >
-                View Order Details
-              </Button>
-              <Button 
-                variant="outline"
-                onClick={() => router.push("/")}
-                className="min-w-[200px]"
-              >
-                Continue Shopping
-              </Button>
-            </div>
-          </div>
-        );
-      
-      case 'pending':
-        return (
-          <div className="text-center">
-            <AlertCircle className="h-16 w-16 text-yellow-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Payment Processing</h2>
-            <p className="text-gray-600 mb-4">
-              Your payment is still being processed. This may take a few minutes.
-            </p>
-            <p className="text-sm text-gray-500 mb-6">
-              You&apos;ll receive an email confirmation once it&apos;s complete.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={() => window.location.reload()}>
-                Check Again
-              </Button>
-              <Button variant="outline" onClick={() => router.push("/orders")}>
-                View Orders
-              </Button>
-            </div>
-          </div>
-        );
-      
-      case 'error':
-        return (
-          <div className="text-center">
-            <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold mb-2">Payment Issue</h2>
-            <p className="text-gray-600 mb-6">{message}</p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button onClick={() => router.push("/cart")}>
-                Return to Cart
-              </Button>
-              <Button variant="outline" onClick={handleContactSupport}>
-                Contact Support
-              </Button>
-              <Button variant="ghost" onClick={() => router.push("/orders")}>
-                View Orders
-              </Button>
-            </div>
-          </div>
-        );
-    }
-  };
+  // Create a display order number from the order ID
+  const displayOrderNumber = orderId 
+    ? `ORD-${orderId.substring(0, 8).toUpperCase()}`
+    : "Your Order";
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
-      <div className="max-w-2xl w-full bg-white rounded-2xl shadow-lg p-8">
-        {renderContent()}
-      </div>
+    <div className="py-5 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center mx-4 min-h-screen">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5 }}
+        className="bg-white rounded-2xl flex flex-col gap-8 shadow-2xl p-6 max-w-xl w-full text-center"
+      >
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+          className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg"
+        >
+          <Check className="text-green-600 w-10 h-10" />
+        </motion.div>
+
+        <h1 className="text-3xl font-bold text-gray-900 mb-4">
+          Payment Successful! 🎉
+        </h1>
+        
+        <div className="space-y-4 mb-4 text-left">
+          <p className="text-gray-700">
+            Thank you for your purchase! Your payment has been processed successfully.
+          </p>
+          
+          <p className="text-gray-700">
+            We&apos;re preparing your order and will ship it soon. A confirmation email 
+            with your order details has been sent to your email address.
+          </p>
+          
+          <div className="bg-gray-50 p-4 rounded-lg space-y-3">
+            <div className="flex justify-between">
+              <span className="text-gray-600">Order Reference:</span>
+              <span className="text-black font-semibold">{displayOrderNumber}</span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-gray-600">Payment Status:</span>
+              <span className="text-green-600 font-semibold">✅ Paid</span>
+            </div>
+            
+            <div className="flex justify-between">
+              <span className="text-gray-600">Confirmation:</span>
+              <span className="text-black font-semibold">Email Sent</span>
+            </div>
+          </div>
+          
+          <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+            <h3 className="font-semibold text-blue-800 mb-2">📧 Check Your Email</h3>
+            <p className="text-sm text-blue-700">
+              Your order confirmation has been sent to your email address. 
+              You&apos;ll receive shipping updates there as well.
+            </p>
+          </div>
+        </div>
+        
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Link
+            href="/"
+            className="flex items-center justify-center px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md"
+          >
+            <Home className="w-5 h-5 mr-2" />
+            Home
+          </Link>
+          <Link
+            href="/orders"
+            className="flex items-center justify-center px-4 py-3 font-semibold bg-lightGreen text-black border border-lightGreen rounded-lg hover:bg-gray-100 transition-all duration-300 shadow-md"
+          >
+            <Package className="w-5 h-5 mr-2" />
+            Orders
+          </Link>
+          <Link
+            href="/"
+            className="flex items-center justify-center px-4 py-3 font-semibold bg-black text-white rounded-lg hover:bg-gray-800 transition-all duration-300 shadow-md"
+          >
+            <ShoppingBag className="w-5 h-5 mr-2" />
+            Shop
+          </Link>
+        </div>
+        
+        {/* Help section */}
+        <div className="mt-6 pt-6 border-t border-gray-200">
+          <h4 className="font-semibold text-gray-700 mb-2">Need Help?</h4>
+          <p className="text-sm text-gray-600">
+            Contact our support team at{" "}
+            <a href="mailto:support@example.com" className="text-blue-600 hover:underline">
+              support@example.com
+            </a>{" "}
+            or visit our{" "}
+            <Link href="/help" className="text-blue-600 hover:underline">
+              Help Center
+            </Link>
+          </p>
+        </div>
+        
+        {/* Debug info (only in development) */}
+        {process.env.NODE_ENV === 'development' && (
+          <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left">
+            <h4 className="text-sm font-mono text-gray-600 mb-2">Debug Info:</h4>
+            <p className="text-xs font-mono break-all">
+              Session ID: {sessionId || "None"}<br/>
+              Order ID: {orderId || "None"}<br/>
+              Timestamp: {new Date().toLocaleTimeString()}
+            </p>
+          </div>
+        )}
+      </motion.div>
     </div>
   );
-}
+};
+
+const SuccessPage = () => {
+  return (
+    <Suspense fallback={
+      <div className="py-5 bg-linear-to-br from-gray-50 to-gray-100 flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading your confirmation...</p>
+        </div>
+      </div>
+    }>
+      <SuccessPageContent />
+    </Suspense>
+  );
+};
+
+export default SuccessPage;
