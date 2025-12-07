@@ -10,7 +10,7 @@ export const metadata: Metadata = {
   description: "Shopcart online store, Your one stop shop for all your needs",
 };
 
-export default function RootLayout({
+export default function CommonDashboardLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;

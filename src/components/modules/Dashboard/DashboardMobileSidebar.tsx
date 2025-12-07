@@ -27,15 +27,20 @@ const DashboardMobileSidebar = ({
     <div className=" flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href={dashboardHome}>
-          <span className="text-xl font-bold text-primary">PH Healthcare</span>
+        <Link href={dashboardHome} className="flex items-center space-x-2">
+          <h2 className="text-2xl text-shop_dark_green font-black tracking-wider uppercase hover:text-shop_light_green hoverEffect group font-sans">
+            Pengui
+            <span className="text-shop_light_green group-hover:text-shop_dark_green hoverEffect">
+              n
+            </span>
+          </h2>
         </Link>
       </div>
       <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
 
       {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-6">
+      <ScrollArea className="flex-1 overflow-hidden">
+        <nav className="px-3 py-4 space-y-6">
           {navItems.map((section, sectionIdx) => (
             <div key={sectionIdx}>
               {section.title && (

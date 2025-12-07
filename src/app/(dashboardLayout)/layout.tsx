@@ -1,23 +1,24 @@
 import DashboardNavbar from "@/components/modules/Dashboard/DashboardNavbar";
 import DashboardSidebar from "@/components/modules/Dashboard/DashboardSidebar";
-import React from "react";
 
-const CommonDashboardLayout = async ({
-  children,
-}: {
-  children: React.ReactNode;
-}) => {
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-screen overflow-hidden">
-      <DashboardSidebar />
-      <div className="flex flex-1 flex-col overflow-hidden">
-        <DashboardNavbar />
-        <main className="flex-1 overflow-y-auto bg-muted/10 p-4 md:p-6">
-          <div className="">{children}</div>
+    <div className="flex min-h-screen">
+      {/* Sidebar */}
+      <aside className="border-r">
+        <DashboardSidebar />
+      </aside>
+
+      {/* Main section */}
+      <div className="flex flex-col flex-1">
+        <header className="h-0 border-b">
+          <DashboardNavbar />
+        </header>
+
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
         </main>
       </div>
     </div>
   );
-};
-
-export default CommonDashboardLayout;
+}

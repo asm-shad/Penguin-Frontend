@@ -1,12 +1,12 @@
 "use client";
 
 import { Badge } from "@/components/ui/badge";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { Separator } from "@/components/ui/separator";
 import { getIconComponent } from "@/lib/icon-mapper";
 import { cn } from "@/lib/utils";
 import { NavSection } from "@/types/dashboard.interface";
 import { IUser } from "@/types/user.interface";
-import { ScrollArea } from "@radix-ui/react-scroll-area";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -22,18 +22,27 @@ const DashboardSidebarContent = ({
   dashboardHome,
 }: DashboardSidebarContentProps) => {
   const pathname = usePathname();
+
   return (
-    <div className="hidden md:flex h-full w-64 flex-col border-r bg-card">
-      {/* Logo/Brand */}
-      <div className="flex h-16 items-center border-b px-6">
+    // Use calc(100vh - headerHeight) so sidebar height is exact available area
+    <div className="hidden md:flex w-64 flex-col border-r bg-card overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
+      {/* Logo/Brand - Fixed height */}
+      <div className="flex h-16 shrink-0 items-center border-b px-6">
         <Link href={dashboardHome} className="flex items-center space-x-2">
-          <span className="text-xl font-bold text-primary">PH Healthcare</span>
+          <h2 className="text-2xl text-shop_dark_green font-black tracking-wider uppercase hover:text-shop_light_green hoverEffect group font-sans">
+            Pengui
+            <span className="text-shop_light_green group-hover:text-shop_dark_green hoverEffect">
+              n
+            </span>
+          </h2>
         </Link>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 px-3 py-4">
-        <nav className="space-y-6">
+      {/* Navigation - Scrollable area */}
+      {/* Note: ScrollArea needs overflow-hidden parent and flex-1 so it can size itself */}
+      <ScrollArea className="flex-1 overflow-hidden">
+        {/* Put padding inside the ScrollArea viewport, not on the ScrollArea wrapper */}
+        <div className="px-3 py-4 space-y-6">
           {navItems.map((section, sectionIdx) => (
             <div key={sectionIdx}>
               {section.title && (
@@ -43,7 +52,7 @@ const DashboardSidebarContent = ({
               )}
               <div className="space-y-1">
                 {section.items.map((item) => {
-                  const isActive = pathname === item.href;
+                  const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                   const Icon = getIconComponent(item.icon);
 
                   return (
@@ -57,12 +66,12 @@ const DashboardSidebarContent = ({
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
-                      <Icon className="h-4 w-4" />
-                      <span className="flex-1">{item.title}</span>
+                      <Icon className="h-4 w-4 shrink-0" />
+                      <span className="flex-1 truncate">{item.title}</span>
                       {item.badge && (
                         <Badge
                           variant={isActive ? "secondary" : "default"}
-                          className="ml-auto"
+                          className="ml-auto shrink-0"
                         >
                           {item.badge}
                         </Badge>
@@ -71,26 +80,24 @@ const DashboardSidebarContent = ({
                   );
                 })}
               </div>
-              {sectionIdx < navItems.length - 1 && (
-                <Separator className="my-4" />
-              )}
+              {sectionIdx < navItems.length - 1 && <Separator className="my-4" />}
             </div>
           ))}
-        </nav>
+        </div>
       </ScrollArea>
 
-      {/* User Info at Bottom */}
-      <div className="border-t p-4">
+      {/* User Info at Bottom - Fixed height */}
+      <div className="border-t p-4 shrink-0">
         <div className="flex items-center gap-3">
-          <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
+          <div className="h-8 w-8 shrink-0 rounded-full bg-primary/10 flex items-center justify-center">
             <span className="text-sm font-semibold text-primary">
-              {userInfo.name.charAt(0).toUpperCase()}
+              {userInfo.name?.charAt(0).toUpperCase() || "U"}
             </span>
           </div>
-          <div className="flex-1 overflow-hidden">
+          <div className="flex-1 min-w-0 overflow-hidden">
             <p className="text-sm font-medium truncate">{userInfo.name}</p>
-            <p className="text-xs text-muted-foreground capitalize">
-              {userInfo.role.toLowerCase()}
+            <p className="text-xs text-muted-foreground capitalize truncate">
+              {userInfo.role?.toLowerCase() || "user"}
             </p>
           </div>
         </div>
