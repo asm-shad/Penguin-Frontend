@@ -15,8 +15,9 @@ interface StoreState {
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
   resetCart: () => void;
-  getTotalPrice: () => number;
-  getSubTotalPrice: () => number;
+  getTotalPrice: () => number; // Final price after discounts
+  getSubTotalPrice: () => number; // Original price total before discounts
+  getDiscountTotal: () => number; // Total discount amount
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
   
@@ -78,20 +79,41 @@ const useStore = create<StoreState>()(
 
       resetCart: () => set({ items: [] }),
 
+      // Final price after all discounts (what customer pays)
       getTotalPrice: () => {
         return get().items.reduce(
-          (total, item) => total + (item.selectedVariant?.price || item.product.price || 0) * item.quantity,
+          (total, item) => {
+            const basePrice = item.selectedVariant?.price || item.product.price || 0;
+            const discount = item.product.discount || 0;
+            const salePrice = basePrice - (basePrice * discount / 100);
+            return total + (salePrice * item.quantity);
+          },
           0
         );
       },
 
+      // Original price total before discounts
       getSubTotalPrice: () => {
-        return get().items.reduce((total, item) => {
-          const basePrice = item.selectedVariant?.price || item.product.price || 0;
-          const discount = ((item.product.discount || 0) * basePrice) / 100;
-          const discountedPrice = basePrice - discount;
-          return total + discountedPrice * item.quantity;
-        }, 0);
+        return get().items.reduce(
+          (total, item) => {
+            const basePrice = item.selectedVariant?.price || item.product.price || 0;
+            return total + (basePrice * item.quantity);
+          },
+          0
+        );
+      },
+
+      // Total discount amount
+      getDiscountTotal: () => {
+        return get().items.reduce(
+          (total, item) => {
+            const basePrice = item.selectedVariant?.price || item.product.price || 0;
+            const discount = item.product.discount || 0;
+            const discountAmount = (basePrice * discount / 100);
+            return total + (discountAmount * item.quantity);
+          },
+          0
+        );
       },
 
       getItemCount: (productId) => {

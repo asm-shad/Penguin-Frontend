@@ -19,6 +19,24 @@ import Container from "@/components/shared/Container";
 import { Title } from "@/components/ui/text";
 import PriceFormatter from "@/components/modules/Product/PriceFormatter";
 
+// Helper function for price calculations
+const calculateItemPrice = (product: any, variant?: any, quantity: number = 1) => {
+  const basePrice = variant?.price || product.price || 0;
+  const discount = product.discount || 0;
+  const discountAmount = (basePrice * discount) / 100;
+  const salePrice = basePrice - discountAmount;
+  
+  return {
+    originalPrice: basePrice,
+    salePrice: salePrice,
+    discountPercent: discount,
+    discountAmount: discountAmount,
+    originalTotal: basePrice * quantity,
+    saleTotal: salePrice * quantity,
+    discountTotal: discountAmount * quantity
+  };
+};
+
 const CartPage = () => {
   const {
     items,
@@ -26,6 +44,7 @@ const CartPage = () => {
     getTotalPrice,
     getItemCount,
     getSubTotalPrice,
+    getDiscountTotal,
     resetCart,
     getGroupedItems,
   } = useStore();
@@ -108,6 +127,12 @@ const CartPage = () => {
     return <EmptyCart />;
   }
 
+  // Calculate totals
+  const subtotal = getSubTotalPrice(); // Sum of original prices
+  const total = getTotalPrice(); // Sum of sale prices
+  const discountTotal = getDiscountTotal(); // Total discount
+  const hasDiscount = discountTotal > 0;
+
   return (
     <div className="bg-gray-50 min-h-screen pb-20 md:pb-10">
       <Container>
@@ -123,8 +148,9 @@ const CartPage = () => {
             <div className="bg-white rounded-lg border shadow-sm">
               {groupedItems.map(({ product, selectedVariant }) => {
                 const itemCount = getItemCount(product.id);
-                const displayProduct = product;
+                const priceInfo = calculateItemPrice(product, selectedVariant, itemCount);
                 const variant = selectedVariant;
+                const hasItemDiscount = priceInfo.discountPercent > 0;
 
                 return (
                   <div
@@ -181,10 +207,27 @@ const CartPage = () => {
 
                     {/* Price and Quantity */}
                     <div className="flex flex-col items-end gap-4">
-                      <PriceFormatter
-                        amount={(variant?.price || product.price) * itemCount}
-                        className="text-xl font-bold"
-                      />
+                      {/* Display both original and sale price if there's a discount */}
+                      {hasItemDiscount ? (
+                        <div className="text-right">
+                          <PriceFormatter
+                            amount={priceInfo.originalTotal}
+                            className="line-through text-gray-500 text-sm block"
+                          />
+                          <PriceFormatter
+                            amount={priceInfo.saleTotal}
+                            className="text-xl font-bold text-green-600 block"
+                          />
+                          <span className="text-xs font-semibold text-red-600 mt-1 block">
+                            Save {priceInfo.discountPercent}%
+                          </span>
+                        </div>
+                      ) : (
+                        <PriceFormatter
+                          amount={priceInfo.originalTotal}
+                          className="text-xl font-bold"
+                        />
+                      )}
                       
                       {/* Quantity Controls */}
                       <div className="flex items-center gap-3">
@@ -231,30 +274,86 @@ const CartPage = () => {
             <div className="bg-white p-6 rounded-lg border shadow-sm">
               <h2 className="text-xl font-semibold mb-4">Order Summary</h2>
               <div className="space-y-4">
-                <div className="flex justify-between">
-                  <span>Subtotal</span>
-                  <PriceFormatter amount={getSubTotalPrice()} />
-                </div>
-                <div className="flex justify-between">
-                  <span>Discount</span>
-                  <PriceFormatter amount={getSubTotalPrice() - getTotalPrice()} />
-                </div>
-                <Separator />
-                <div className="flex justify-between text-lg font-bold">
-                  <span>Total</span>
+                {/* Subtotal - Only show line-through if there's a discount */}
+                <div className="flex justify-between items-center">
+                  <span className="text-gray-600">Subtotal</span>
                   <PriceFormatter 
-                    amount={getTotalPrice()} 
-                    className="text-primary"
+                    amount={subtotal} 
+                    className={hasDiscount ? "line-through text-gray-500 text-sm" : "text-base"}
+                    showLineThrough={hasDiscount}
                   />
                 </div>
+                
+                {/* Only show Discount section if there's a discount */}
+                {hasDiscount && (
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-600">Discount</span>
+                    <PriceFormatter 
+                      amount={discountTotal} 
+                      className="text-red-600 font-semibold"
+                      prefix="-"
+                    />
+                  </div>
+                )}
+                
+                <Separator />
+                
+                {/* Total - After discount */}
+                <div className="flex justify-between items-center">
+                  <span className="text-lg font-bold">Total</span>
+                  <div className="text-right">
+                    <PriceFormatter 
+                      amount={total} 
+                      className="text-primary text-2xl font-bold"
+                    />
+                    {hasDiscount && (
+                      <p className="text-xs text-green-600 mt-1">
+                        You save {((discountTotal / subtotal) * 100).toFixed(1)}%
+                      </p>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Only show savings banner if there's a discount */}
+                {hasDiscount && (
+                  <div className="mt-4 p-3 bg-green-50 rounded-lg border border-green-100">
+                    <p className="text-sm text-green-700 text-center font-medium">
+                      🎉 You&apos;re saving{" "}
+                      <span className="font-bold">
+                        <PriceFormatter 
+                          amount={discountTotal} 
+                          className="font-bold"
+                          prefix=""
+                        />
+                      </span>
+                    </p>
+                  </div>
+                )}
+                
                 <Button
-                  className="w-full mt-4 py-6 text-lg font-semibold"
+                  className="w-full mt-4 py-6 text-lg font-semibold bg-black hover:bg-gray-800 text-white"
                   size="lg"
                   onClick={handleCheckout}
                   disabled={loading || !selectedAddress || items.length === 0}
                 >
-                  {loading ? "Processing..." : "Proceed to Checkout"}
+                  {loading ? (
+                    <span className="flex items-center justify-center gap-2">
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></span>
+                      Processing...
+                    </span>
+                  ) : (
+                    "Proceed to Checkout"
+                  )}
                 </Button>
+                
+                {/* Free shipping notice */}
+                {total >= 50 && (
+                  <div className="mt-3 p-2 bg-blue-50 rounded text-center">
+                    <p className="text-sm text-blue-700">
+                      🚚 Free shipping on orders over $50
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -263,7 +362,10 @@ const CartPage = () => {
               <div className="bg-white p-6 rounded-lg border shadow-sm">
                 <h2 className="text-xl font-semibold mb-4">Delivery Address</h2>
                 {addressesLoading ? (
-                  <div className="text-center py-4">Loading addresses...</div>
+                  <div className="text-center py-4">
+                    <div className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-black"></div>
+                    <p className="mt-2 text-gray-500 text-sm">Loading addresses...</p>
+                  </div>
                 ) : (
                   <div className="space-y-3">
                     {user.userAddresses.map((address) => (
@@ -272,7 +374,7 @@ const CartPage = () => {
                         onClick={() => setSelectedAddress(address)}
                         className={`p-3 border rounded-lg cursor-pointer transition-all ${
                           selectedAddress?.id === address.id
-                            ? "border-primary bg-primary/5"
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
                             : "border-gray-200 hover:border-gray-300"
                         }`}
                       >
@@ -287,15 +389,27 @@ const CartPage = () => {
                               )}
                             </div>
                             <div className="text-sm text-gray-600 mt-2">
-                              <p>{address.address?.addressLine}</p>
+                              <p className="font-medium">{address.address?.addressLine}</p>
                               <p>
                                 {address.address?.city}, {address.address?.state}{" "}
                                 {address.address?.zipCode}
                               </p>
+                              {address.address?.country && (
+                                <p>{address.address.country}</p>
+                              )}
                               {address.email && (
-                                <p className="mt-1">Email: {address.email}</p>
+                                <p className="mt-1 text-blue-600">Email: {address.email}</p>
                               )}
                             </div>
+                          </div>
+                          <div className={`h-4 w-4 rounded-full border ${
+                            selectedAddress?.id === address.id 
+                              ? "bg-primary border-primary" 
+                              : "border-gray-300"
+                          }`}>
+                            {selectedAddress?.id === address.id && (
+                              <div className="h-2 w-2 bg-white rounded-full m-auto mt-0.5"></div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -311,6 +425,48 @@ const CartPage = () => {
                 </Button>
               </div>
             )}
+            
+            {/* Cart Summary */}
+            <div className="bg-white p-6 rounded-lg border shadow-sm">
+              <h3 className="font-semibold mb-4">Cart Summary</h3>
+              <div className="space-y-2">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Items in cart:</span>
+                  <span className="font-medium">{items.length}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">Total quantity:</span>
+                  <span className="font-medium">
+                    {items.reduce((sum, item) => sum + item.quantity, 0)}
+                  </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-600">
+                    {hasDiscount ? "Original price:" : "Subtotal:"}
+                  </span>
+                  <PriceFormatter 
+                    amount={subtotal} 
+                    className={hasDiscount ? "line-through text-gray-500" : "font-medium"}
+                    showLineThrough={hasDiscount}
+                  />
+                </div>
+                {hasDiscount && (
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Discount applied:</span>
+                    <PriceFormatter 
+                      amount={discountTotal} 
+                      className="text-red-600 font-semibold"
+                      prefix="-"
+                    />
+                  </div>
+                )}
+                <Separator className="my-2" />
+                <div className="flex justify-between font-semibold">
+                  <span>You pay:</span>
+                  <PriceFormatter amount={total} className="text-green-600" />
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </Container>
