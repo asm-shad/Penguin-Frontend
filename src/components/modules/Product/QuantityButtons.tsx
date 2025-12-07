@@ -8,9 +8,9 @@ import useStore from "../../../../store";
 interface Props {
   product: IProduct;
   className?: string;
-  quantity: number;
-  onIncrease: () => void;
-  onDecrease: () => void;
+  quantity?: number;
+  onIncrease?: () => void;
+  onDecrease?: () => void;
 }
 
 const QuantityButtons = ({
