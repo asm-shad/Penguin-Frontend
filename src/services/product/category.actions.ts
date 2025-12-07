@@ -99,39 +99,6 @@ export const fetchFeaturedCategories = cache(async (limit?: number) => {
   }
 });
 
-// Server-side function to fetch navigation categories
-export const fetchNavigationCategories = cache(async () => {
-  try {
-    const res = await serverFetch.get("/category/navigation");
-
-    if (!res.ok) {
-      throw new Error(
-        `Failed to fetch navigation categories: ${res.statusText}`
-      );
-    }
-
-    const result = await res.json();
-
-    if (!result.success) {
-      throw new Error(
-        result.message || "Failed to fetch navigation categories"
-      );
-    }
-
-    return {
-      success: true,
-      data: result.data as ICategory[],
-    };
-  } catch (error: any) {
-    console.error("Error fetching navigation categories:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch navigation categories",
-      data: [],
-    };
-  }
-});
-
 // Server-side function to fetch category by slug
 export const fetchCategoryBySlug = cache(async (slug: string) => {
   try {
@@ -257,46 +224,6 @@ export const updateCategory = cache(
   }
 );
 
-// Server-side function to update category featured status
-export const updateCategoryFeatured = cache(
-  async (id: string, isFeatured: boolean) => {
-    try {
-      const res = await serverFetch.patch(`/category/${id}/featured`, {
-        body: JSON.stringify({ isFeatured }),
-        headers: {
-          "Content-Type": "application/json",
-        },
-      });
-
-      if (!res.ok) {
-        throw new Error(
-          `Failed to update category featured status: ${res.statusText}`
-        );
-      }
-
-      const result = await res.json();
-
-      if (!result.success) {
-        throw new Error(
-          result.message || "Failed to update category featured status"
-        );
-      }
-
-      return {
-        success: true,
-        data: result.data as ICategory,
-      };
-    } catch (error: any) {
-      console.error("Error updating category featured status:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to update category featured status",
-        data: null,
-      };
-    }
-  }
-);
-
 // Server-side function to delete a category
 export const deleteCategory = cache(async (id: string) => {
   try {
@@ -322,20 +249,6 @@ export const deleteCategory = cache(async (id: string) => {
       success: false,
       message: error.message || "Failed to delete category",
       data: null,
-    };
-  }
-});
-
-// Convenience function to fetch categories for homepage
-export const fetchHomepageCategories = cache(async () => {
-  try {
-    return await fetchFeaturedCategories(6);
-  } catch (error: any) {
-    console.error("Error fetching homepage categories:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch homepage categories",
-      data: [],
     };
   }
 });

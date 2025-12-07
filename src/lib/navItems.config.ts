@@ -3,6 +3,7 @@
 import { NavSection } from "@/types/dashboard.interface";
 import { getDefaultDashboardRoute, UserRole } from "./auth-utils";
 
+// ==================== COMMON NAV ITEMS (For ALL roles) ====================
 export const getCommonNavItems = (role: UserRole): NavSection[] => {
   const defaultDashboard = getDefaultDashboardRoute(role);
 
@@ -36,29 +37,6 @@ export const getCommonNavItems = (role: UserRole): NavSection[] => {
       ],
     },
     {
-      title: "Account",
-      items: [
-        {
-          title: "My Orders",
-          href: "/my-orders",
-          icon: "Package",
-          roles: ["USER"],
-        },
-        {
-          title: "Wishlist",
-          href: "/wishlist",
-          icon: "Heart",
-          roles: ["USER"],
-        },
-        {
-          title: "Addresses",
-          href: "/my-addresses",
-          icon: "MapPin",
-          roles: ["USER"],
-        },
-      ],
-    },
-    {
       title: "Settings",
       items: [
         {
@@ -78,68 +56,120 @@ export const getCommonNavItems = (role: UserRole): NavSection[] => {
   ];
 };
 
-// COUPON MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
-export const couponManagementNavItems: NavSection[] = [
+// ==================== USER-SPECIFIC NAV ITEMS (Only for USER role) ====================
+// User Account Management
+export const userAccountNavItems: NavSection[] = [
   {
-    title: "Coupon Management",
+    title: "Account",
     items: [
       {
-        title: "All Coupons",
-        href: "/admin/coupons",
-        icon: "Percent",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        title: "My Orders",
+        href: "/my-orders",
+        icon: "Package",
+        roles: ["USER"],
       },
       {
-        title: "Create Coupon",
-        href: "/admin/coupons/create",
-        icon: "PlusCircle",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        title: "Wishlist",
+        href: "/wishlist",
+        icon: "Heart",
+        roles: ["USER"],
       },
       {
-        title: "Coupon Analytics",
-        href: "/admin/coupons/analytics",
-        icon: "BarChart3",
-        roles: ["SUPER_ADMIN", "ADMIN"],
+        title: "Addresses",
+        href: "/my-addresses",
+        icon: "MapPin",
+        roles: ["USER"],
       },
     ],
   },
 ];
 
-// CATALOG MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
-export const catalogManagementNavItems: NavSection[] = [
+// Regular USER Shopping & Support
+export const userNavItems: NavSection[] = [
   {
-    title: "Catalog Management",
+    title: "Shopping",
     items: [
-      // Categories
       {
-        title: "Product Categories",
-        href: "/admin/categories",
+        title: "Shop Products",
+        href: "/shop",
+        icon: "ShoppingBag",
+        roles: ["USER"],
+      },
+      {
+        title: "Categories",
+        href: "/categories",
         icon: "Layers",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        roles: ["USER"],
       },
       {
-        title: "Add Category",
-        href: "/admin/categories/add",
-        icon: "FolderPlus",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      // Brands
-      {
-        title: "Brands",
-        href: "/admin/brands",
-        icon: "Tag",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        title: "Deals & Offers",
+        href: "/deals",
+        icon: "Percent",
+        roles: ["USER"],
       },
       {
-        title: "Add Brand",
-        href: "/admin/brands/add",
-        icon: "TagPlus",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        title: "Featured Products",
+        href: "/featured",
+        icon: "Star",
+        roles: ["USER"],
+      },
+    ],
+  },
+  {
+    title: "My Account",
+    items: [
+      {
+        title: "Order History",
+        href: "/dashboard/orders",
+        icon: "Package",
+        roles: ["USER"],
+      },
+      {
+        title: "Track Order",
+        href: "/dashboard/track-order",
+        icon: "Truck",
+        roles: ["USER"],
+      },
+      {
+        title: "My Wishlist",
+        href: "/dashboard/wishlist",
+        icon: "Heart",
+        roles: ["USER"],
+      },
+      {
+        title: "My Reviews",
+        href: "/dashboard/reviews",
+        icon: "Star",
+        roles: ["USER"],
+      },
+    ],
+  },
+  {
+    title: "Support",
+    items: [
+      {
+        title: "Help Center",
+        href: "/help",
+        icon: "HelpCircle",
+        roles: ["USER"],
+      },
+      {
+        title: "Contact Support",
+        href: "/contact-support",
+        icon: "MessageSquare",
+        roles: ["USER"],
+      },
+      {
+        title: "Return Items",
+        href: "/returns",
+        icon: "RotateCcw",
+        roles: ["USER"],
       },
     ],
   },
 ];
 
+// ==================== ADMIN-SPECIFIC NAV ITEMS (For staff roles) ====================
 // SUPER_ADMIN Nav Items
 export const superAdminNavItems: NavSection[] = [
   {
@@ -190,7 +220,7 @@ export const superAdminNavItems: NavSection[] = [
   },
 ];
 
-// ADMIN Nav Items (Admin inherits all management features)
+// ADMIN Nav Items
 export const adminNavItems: NavSection[] = [
   {
     title: "Admin Dashboard",
@@ -217,7 +247,7 @@ export const adminNavItems: NavSection[] = [
   },
 ];
 
-// PRODUCT_MANAGER Nav Items (Product Manager only sees product-related stuff)
+// PRODUCT_MANAGER Nav Items
 export const productManagerNavItems: NavSection[] = [
   {
     title: "Product Management",
@@ -346,6 +376,7 @@ export const customerSupportNavItems: NavSection[] = [
   },
 ];
 
+// ==================== MANAGEMENT MODULES (Shared across multiple staff roles) ====================
 // ORDER MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, CUSTOMER_SUPPORT)
 export const orderManagementNavItems: NavSection[] = [
   {
@@ -412,6 +443,68 @@ export const customerManagementNavItems: NavSection[] = [
   },
 ];
 
+// CATALOG MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
+export const catalogManagementNavItems: NavSection[] = [
+  {
+    title: "Catalog Management",
+    items: [
+      // Categories
+      {
+        title: "Product Categories",
+        href: "/admin/categories",
+        icon: "Layers",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+      {
+        title: "Add Category",
+        href: "/admin/categories/add",
+        icon: "FolderPlus",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+      // Brands
+      {
+        title: "Brands",
+        href: "/admin/brands",
+        icon: "Tag",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+      {
+        title: "Add Brand",
+        href: "/admin/brands/add",
+        icon: "TagPlus",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+    ],
+  },
+];
+
+// COUPON MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
+export const couponManagementNavItems: NavSection[] = [
+  {
+    title: "Coupon Management",
+    items: [
+      {
+        title: "All Coupons",
+        href: "/admin/coupons",
+        icon: "Percent",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+      {
+        title: "Create Coupon",
+        href: "/admin/coupons/create",
+        icon: "PlusCircle",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
+      {
+        title: "Coupon Analytics",
+        href: "/admin/coupons/analytics",
+        icon: "BarChart3",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+      },
+    ],
+  },
+];
+
 // MARKETING MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
 export const marketingManagementNavItems: NavSection[] = [
   {
@@ -439,7 +532,7 @@ export const marketingManagementNavItems: NavSection[] = [
   },
 ];
 
-// Blog Section (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
+// BLOG MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
 export const blogNavItems: NavSection[] = [
   {
     title: "Blog Management",
@@ -478,158 +571,71 @@ export const blogNavItems: NavSection[] = [
   },
 ];
 
-// Regular USER Nav Items
-export const userNavItems: NavSection[] = [
-  {
-    title: "Shopping",
-    items: [
-      {
-        title: "Shop Products",
-        href: "/shop",
-        icon: "ShoppingBag",
-        roles: ["USER"],
-      },
-      {
-        title: "Categories",
-        href: "/categories",
-        icon: "Layers",
-        roles: ["USER"],
-      },
-      {
-        title: "Deals & Offers",
-        href: "/deals",
-        icon: "Percent",
-        roles: ["USER"],
-      },
-      {
-        title: "Featured Products",
-        href: "/featured",
-        icon: "Star",
-        roles: ["USER"],
-      },
-    ],
-  },
-  {
-    title: "My Account",
-    items: [
-      {
-        title: "Order History",
-        href: "/dashboard/orders",
-        icon: "Package",
-        roles: ["USER"],
-      },
-      {
-        title: "Track Order",
-        href: "/dashboard/track-order",
-        icon: "Truck",
-        roles: ["USER"],
-      },
-      {
-        title: "My Wishlist",
-        href: "/dashboard/wishlist",
-        icon: "Heart",
-        roles: ["USER"],
-      },
-      {
-        title: "My Reviews",
-        href: "/dashboard/reviews",
-        icon: "Star",
-        roles: ["USER"],
-      },
-    ],
-  },
-  {
-    title: "Support",
-    items: [
-      {
-        title: "Help Center",
-        href: "/help",
-        icon: "HelpCircle",
-        roles: ["USER"],
-      },
-      {
-        title: "Contact Support",
-        href: "/contact-support",
-        icon: "MessageSquare",
-        roles: ["USER"],
-      },
-      {
-        title: "Return Items",
-        href: "/returns",
-        icon: "RotateCcw",
-        roles: ["USER"],
-      },
-    ],
-  },
-];
-
-// Helper function to get all navigation items based on role
+// ==================== MAIN FUNCTION: Get Navigation by Role ====================
 export const getNavItemsByRole = (role: UserRole): NavSection[] => {
   const commonNavItems = getCommonNavItems(role);
 
-  // SUPER_ADMIN: Has access to EVERYTHING
-  if (role === "SUPER_ADMIN") {
-    return [
-      ...commonNavItems,
-      ...superAdminNavItems,
-      ...adminNavItems,
-      ...productManagerNavItems,
-      ...customerSupportNavItems,
-      ...orderManagementNavItems,
-      ...customerManagementNavItems,
-      ...catalogManagementNavItems,
-      ...couponManagementNavItems,
-      ...marketingManagementNavItems,
-      ...blogNavItems,
-    ];
-  }
+  switch (role) {
+    case "SUPER_ADMIN":
+      return [
+        ...commonNavItems,
+        ...superAdminNavItems,
+        ...adminNavItems,
+        ...productManagerNavItems,
+        ...customerSupportNavItems,
+        ...orderManagementNavItems,
+        ...customerManagementNavItems,
+        ...catalogManagementNavItems,
+        ...couponManagementNavItems,
+        ...marketingManagementNavItems,
+        ...blogNavItems,
+      ];
 
-  // ADMIN: Has access to all management features except super admin specific
-  if (role === "ADMIN") {
-    return [
-      ...commonNavItems,
-      ...adminNavItems,
-      ...productManagerNavItems,
-      ...customerSupportNavItems,
-      ...orderManagementNavItems,
-      ...customerManagementNavItems,
-      ...catalogManagementNavItems,
-      ...couponManagementNavItems,
-      ...marketingManagementNavItems,
-      ...blogNavItems,
-    ];
-  }
+    case "ADMIN":
+      return [
+        ...commonNavItems,
+        ...adminNavItems,
+        ...productManagerNavItems,
+        ...customerSupportNavItems,
+        ...orderManagementNavItems,
+        ...customerManagementNavItems,
+        ...catalogManagementNavItems,
+        ...couponManagementNavItems,
+        ...marketingManagementNavItems,
+        ...blogNavItems,
+      ];
 
-  // PRODUCT_MANAGER: Only product and catalog management
-  if (role === "PRODUCT_MANAGER") {
-    return [
-      ...commonNavItems,
-      ...productManagerNavItems,
-      ...catalogManagementNavItems,
-      ...couponManagementNavItems,
-      ...blogNavItems,
-    ];
-  }
+    case "PRODUCT_MANAGER":
+      return [
+        ...commonNavItems,
+        ...productManagerNavItems,
+        ...catalogManagementNavItems,
+        ...couponManagementNavItems,
+        ...blogNavItems,
+      ];
 
-  // CUSTOMER_SUPPORT: Only customer and order management
-  if (role === "CUSTOMER_SUPPORT") {
-    return [
-      ...commonNavItems,
-      ...customerSupportNavItems,
-      ...orderManagementNavItems,
-      ...customerManagementNavItems,
-    ];
-  }
+    case "CUSTOMER_SUPPORT":
+      return [
+        ...commonNavItems,
+        ...customerSupportNavItems,
+        ...orderManagementNavItems,
+        ...customerManagementNavItems,
+      ];
 
-  // Regular USER
-  if (role === "USER") {
-    return [...commonNavItems, ...userNavItems];
-  }
+    case "USER":
+      return [
+        ...commonNavItems,
+        ...userAccountNavItems,
+        ...userNavItems,
+      ];
 
-  return commonNavItems;
+    default:
+      return commonNavItems;
+  }
 };
 
-// Alternative: Get flattened navigation items for easier rendering
+// ==================== HELPER FUNCTIONS ====================
+// Get flattened navigation items for easier rendering
 export const getFlattenedNavItems = (role: UserRole) => {
   const navSections = getNavItemsByRole(role);
   const flattenedItems: any[] = [];
@@ -664,4 +670,24 @@ export const hasAccessToRoute = (
 export const getAvailableRoutes = (role: UserRole): string[] => {
   const navItems = getFlattenedNavItems(role);
   return navItems.map(item => item.href);
+};
+
+// Filter sections to only show sections with visible items for current role
+export const getFilteredNavSections = (role: UserRole): NavSection[] => {
+  const navSections = getNavItemsByRole(role);
+  
+  return navSections
+    .map(section => {
+      if (section.items) {
+        const visibleItems = section.items.filter(item => 
+          item.roles.includes(role)
+        );
+        return { ...section, items: visibleItems };
+      }
+      return section;
+    })
+    .filter(section => 
+      // Keep sections that have items OR don't have items array (header-only sections)
+      !section.items || section.items.length > 0
+    );
 };
