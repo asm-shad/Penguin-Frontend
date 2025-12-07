@@ -4,6 +4,7 @@
 import { serverFetch } from "@/lib/server-fetch";
 import { IOrder } from "@/types/order.interface";
 import { CreateOrderDto, IOrderFilters, IUpdateOrderStatusDto } from "@/types/orderPayment";
+import { cookies } from "next/headers";
 
 import { cache } from "react";
 
@@ -125,8 +126,15 @@ export const fetchAllOrders = cache(async (filters?: IOrderFilters) => {
 });
 
 // Get my orders (authenticated user)
-export const getMyOrders = async (filters?: any) => {
+export async function getMyOrders(filters?: any) {
   try {
+    const cookieStore = await cookies();
+    const accessToken = cookieStore.get("accessToken")?.value;
+    
+    if (!accessToken) {
+      throw new Error("Not authenticated");
+    }
+
     const queryParams = new URLSearchParams();
     
     if (filters?.status) queryParams.append("status", filters.status);
@@ -134,7 +142,9 @@ export const getMyOrders = async (filters?: any) => {
     if (filters?.limit) queryParams.append("limit", filters.limit.toString());
     
     const queryString = queryParams.toString();
-    const endpoint = queryString ? `/orders/my-orders?${queryString}` : "/orders/my-orders";
+    const endpoint = queryString ? 
+      `/orders/my-orders?${queryString}` : 
+      "/orders/my-orders";
 
     const res = await serverFetch.get(endpoint);
 
@@ -150,7 +160,7 @@ export const getMyOrders = async (filters?: any) => {
 
     return {
       success: true,
-      data: result.data,
+      data: result.data as IOrder[],
       meta: result.meta,
     };
   } catch (error: any) {
@@ -162,7 +172,7 @@ export const getMyOrders = async (filters?: any) => {
       meta: undefined,
     };
   }
-};
+}
 
 // Get order by ID
 export const fetchOrderById = cache(async (id: string) => {
