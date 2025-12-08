@@ -9,7 +9,6 @@ import {
   createProductManagerSchema, 
   createCustomerSupportSchema,
   updateUserStatusSchema,
-  updateProfileSchema,
 } from "@/zod/user.validation";
 import { IUpdateUserStatus } from "@/types/user.interface";
 
@@ -70,7 +69,44 @@ export async function createAdmin(_prevState: any, formData: FormData) {
   }
 }
 
-// Create Product Manager - FIXED VERSION
+// Update Admin (for editing)
+export async function updateAdmin(id: string, _prevState: any, formData: FormData) {
+  try {
+    // For edit, we use the update-my-profile endpoint but with admin privileges
+    const userData = {
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string || undefined,
+      gender: formData.get("gender") as string || undefined,
+    };
+    
+    // Note: Since we're using update-my-profile endpoint, we need to handle this differently
+    // For now, we'll use a PATCH request to update user data
+    const newFormData = new FormData();
+    newFormData.append("data", JSON.stringify(userData));
+    
+    const file = formData.get("file") as File;
+    if (file && file.size > 0) {
+      newFormData.append("file", file);
+    }
+
+    // We need a specific endpoint for updating other users
+    // For now, we'll use a workaround - you should create an endpoint like /user/:id
+    const response = await serverFetch.patch(`/user/${id}`, {
+      body: newFormData,
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    console.error("Update admin error:", error);
+    return {
+      success: false,
+      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to update admin"}`,
+    };
+  }
+}
+
+// Create Product Manager
 export async function createProductManager(_prevState: any, formData: FormData) {
   const validationPayload = {
     email: formData.get("email") as string,
@@ -121,6 +157,38 @@ export async function createProductManager(_prevState: any, formData: FormData) 
     return {
       success: false,
       message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to create product manager"}`,
+    };
+  }
+}
+
+// Update Product Manager
+export async function updateProductManager(id: string, _prevState: any, formData: FormData) {
+  try {
+    const userData = {
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string || undefined,
+      gender: formData.get("gender") as string || undefined,
+    };
+    
+    const newFormData = new FormData();
+    newFormData.append("data", JSON.stringify(userData));
+    
+    const file = formData.get("file") as File;
+    if (file && file.size > 0) {
+      newFormData.append("file", file);
+    }
+
+    const response = await serverFetch.patch(`/user/${id}`, {
+      body: newFormData,
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    console.error("Update product manager error:", error);
+    return {
+      success: false,
+      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to update product manager"}`,
     };
   }
 }
@@ -176,6 +244,37 @@ export async function createCustomerSupport(_prevState: any, formData: FormData)
     return {
       success: false,
       message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to create customer support"}`,
+    };
+  }
+}
+
+export async function updateCustomerSupport(id: string, _prevState: any, formData: FormData) {
+  try {
+    const userData = {
+      name: formData.get("name") as string,
+      phone: formData.get("phone") as string || undefined,
+      gender: formData.get("gender") as string || undefined,
+    };
+    
+    const newFormData = new FormData();
+    newFormData.append("data", JSON.stringify(userData));
+    
+    const file = formData.get("file") as File;
+    if (file && file.size > 0) {
+      newFormData.append("file", file);
+    }
+
+    const response = await serverFetch.patch(`/user/${id}`, {
+      body: newFormData,
+    });
+
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    console.error("Update customer support error:", error);
+    return {
+      success: false,
+      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to update customer support"}`,
     };
   }
 }
@@ -243,70 +342,16 @@ export async function updateUserStatus(id: string, statusData: IUpdateUserStatus
   }
 }
 
-// Get my profile
-export async function getMyProfile() {
+export async function deleteUser(id: string) {
   try {
-    const response = await serverFetch.get("/user/me");
+    const response = await serverFetch.delete(`/user/${id}`);
     const result = await response.json();
     return result;
   } catch (error: any) {
-    console.error("Get profile error:", error);
+    console.error("Delete user error:", error);
     return {
       success: false,
-      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to fetch profile"}`,
-    };
-  }
-}
-
-// Update my profile
-export async function updateMyProfile(_prevState: any, formData: FormData) {
-  const validationPayload = {
-    name: formData.get("name") as string,
-    phone: formData.get("phone") as string || undefined,
-    gender: formData.get("gender") as "MALE" | "FEMALE" | "OTHER" || undefined,
-  };
-
-  const validatedPayload = zodValidator(validationPayload, updateProfileSchema);
-
-  if (!validatedPayload.success && validatedPayload.errors) {
-    return {
-      success: validatedPayload.success,
-      message: "Validation failed",
-      errors: validatedPayload.errors,
-    };
-  }
-
-  if (!validatedPayload.data) {
-    return {
-      success: false,
-      message: "Validation failed",
-    };
-  }
-
-  const backendPayload = {
-    ...validatedPayload.data,
-  };
-
-  const newFormData = new FormData();
-  newFormData.append("data", JSON.stringify(backendPayload));
-  
-  const file = formData.get("file") as File;
-  if (file && file.size > 0) {
-    newFormData.append("file", file);
-  }
-
-  try {
-    const response = await serverFetch.patch("/user/update-my-profile", {
-      body: newFormData,
-    });
-
-    const result = await response.json();
-    return result;
-  } catch (error: any) {
-    console.error("Update profile error:", error);
-    return {
-      success: false,
-      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to update profile"}`,
+      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to delete user"}`,
     };
   }
 }

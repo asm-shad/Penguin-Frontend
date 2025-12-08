@@ -419,24 +419,24 @@ export const orderManagementNavItems: NavSection[] = [
 // CUSTOMER MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, CUSTOMER_SUPPORT)
 export const customerManagementNavItems: NavSection[] = [
   {
-    title: "Customer Management",
+    title: "Staff Management",
     items: [
       {
-        title: "All Customers",
-        href: "/admin/customers",
-        icon: "Users",
+        title: "Admin",
+        href: "/admin/dashboard/admin-management",
+        icon: "UserCog",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },
       {
-        title: "Customer Analytics",
-        href: "/admin/customers/analytics",
-        icon: "TrendingUp",
+        title: "Product Manager",
+        href: "/admin/dashboard/product-manager-management",
+        icon: "PackageSearch", // or "PackageCheck"
         roles: ["SUPER_ADMIN", "ADMIN"],
       },
       {
-        title: "Customer Groups",
-        href: "/admin/customer-groups",
-        icon: "Users",
+        title: "Customer Support",
+        href: "/admin/dashboard/customer-support-management",
+        icon: "Headphones",
         roles: ["SUPER_ADMIN", "ADMIN"],
       },
     ],
