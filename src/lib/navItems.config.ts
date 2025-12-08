@@ -468,36 +468,16 @@ export const catalogManagementNavItems: NavSection[] = [
         icon: "ListTree",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
+      {
+        title: "Coupon",
+        href: "/admin/dashboard/coupon-management",
+        icon: "TicketPercent",
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+      },
     ],
   },
 ];
 
-// COUPON MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
-export const couponManagementNavItems: NavSection[] = [
-  {
-    title: "Coupon Management",
-    items: [
-      {
-        title: "All Coupons",
-        href: "/admin/coupons",
-        icon: "Percent",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Create Coupon",
-        href: "/admin/coupons/create",
-        icon: "PlusCircle",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Coupon Analytics",
-        href: "/admin/coupons/analytics",
-        icon: "BarChart3",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-    ],
-  },
-];
 
 // MARKETING MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
 export const marketingManagementNavItems: NavSection[] = [
@@ -580,7 +560,6 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...orderManagementNavItems,
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
-        ...couponManagementNavItems,
         ...marketingManagementNavItems,
         ...blogNavItems,
       ];
@@ -594,7 +573,6 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...orderManagementNavItems,
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
-        ...couponManagementNavItems,
         ...marketingManagementNavItems,
         ...blogNavItems,
       ];
@@ -604,7 +582,6 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...commonNavItems,
         ...productManagerNavItems,
         ...catalogManagementNavItems,
-        ...couponManagementNavItems,
         ...blogNavItems,
       ];
 

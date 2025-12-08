@@ -88,7 +88,7 @@ export type UserStatusType = (typeof UserStatus)[keyof typeof UserStatus];
 export type GenderType = (typeof Gender)[keyof typeof Gender];
 export type ProductStatusType =
   (typeof ProductStatus)[keyof typeof ProductStatus];
-export type DiscountTypeType = (typeof DiscountType)[keyof typeof DiscountType];
+export type DiscountType = (typeof DiscountType)[keyof typeof DiscountType];
 export type OrderStatusType = (typeof OrderStatus)[keyof typeof OrderStatus];
 export type PaymentMethodType =
   (typeof PaymentMethod)[keyof typeof PaymentMethod];
@@ -147,4 +147,24 @@ export interface IUserAddress {
   user: IUser;
   addressId: string;
   address: IAddress;
+}
+
+export interface ICreateUser {
+  email: string;
+  password: string;
+  name: string;
+  phone?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  profilePhoto?: File;
+}
+
+export interface IUpdateUserStatus {
+  userStatus: "ACTIVE" | "INACTIVE" | "DELETED";
+}
+
+export interface IUpdateProfile {
+  name: string;
+  phone?: string;
+  gender?: "MALE" | "FEMALE" | "OTHER";
+  profilePhoto?: File;
 }
