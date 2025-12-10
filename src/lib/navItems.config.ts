@@ -254,31 +254,25 @@ export const productManagerNavItems: NavSection[] = [
     items: [
       {
         title: "Product Dashboard",
-        href: "/product-manager/dashboard",
+        href: "/admin/dashboard/product-management",
         icon: "LayoutDashboard",
-        roles: ["PRODUCT_MANAGER"],
-      },
-      {
-        title: "Add New Product",
-        href: "/admin/products/add",
-        icon: "PlusCircle",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN","PRODUCT_MANAGER"],
       },
       {
         title: "All Products",
-        href: "/admin/products",
+        href: "/admin/dashboard/product-management/products",
         icon: "Package",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
       {
         title: "Inventory Management",
-        href: "/admin/inventory",
+        href: "/admin/dashboard/product-management/inventory",
         icon: "PackageCheck",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
       {
         title: "Product Reviews",
-        href: "/admin/reviews",
+        href: "/admin/dashboard/product-management/reviews",
         icon: "Star",
         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
@@ -332,20 +326,26 @@ export const customerSupportNavItems: NavSection[] = [
     title: "Customer Management",
     items: [
       {
+        title: "Customer Management",
+        href: "/admin/dashboard/customer-management/catalog",
+        icon: "Package",
+        roles: ["SUPER_ADMIN", "ADMIN"],
+      },
+      {
         title: "Customer Issues",
-        href: "/admin/customer-issues",
+        href: "/admin/dashboard/customer-management/customer-issues",
         icon: "AlertCircle",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },
       {
         title: "Order Issues",
-        href: "/admin/order-issues",
+        href: "/admin/dashboard/customer-management/order-issues",
         icon: "ShoppingCart",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },
       {
         title: "Return Requests",
-        href: "/admin/returns",
+        href: "/admin/dashboard/customer-management/returns",
         icon: "RotateCcw",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },

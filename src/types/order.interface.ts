@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import {
-  DiscountTypeType,
   OrderStatusType,
   PaymentMethodType,
   PaymentStatusType,
   PaymentGatewayType,
+  DiscountType,
 } from "./user.interface";
 import { IProduct, IProductVariant } from "./product.interface";
 
@@ -13,7 +13,7 @@ export interface ICoupon {
   id: string;
   code: string;
   description?: string;
-  discountType: DiscountTypeType;
+  discountType: DiscountType;
   discountValue: number;
   maxUses?: number;
   usedCount: number;

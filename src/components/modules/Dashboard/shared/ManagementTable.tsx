@@ -13,7 +13,7 @@ import {
   Trash,
 } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
-import React, { useTransition } from "react";
+import React, { ReactNode, useTransition } from "react";
 
 
 
@@ -31,9 +31,10 @@ interface ManagementTableProps<T> {
   onEdit?: (row: T) => void;
   onDelete?: (row: T) => void;
   getRowKey: (row: T) => string;
-  emptyMessage?: string;
+  emptyMessage?: string | ReactNode; // Changed from string to string | ReactNode
   isRefreshing?: boolean;
 }
+
 
 // const ManagementTable<T> = (props: ManagementTableProps<T>) => {
 //   return <div>ManagementTable</div>;

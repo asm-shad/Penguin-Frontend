@@ -37,3 +37,10 @@ export function queryStringFormatter(searchParamsObj: { [key: string]: string | 
     queryString = queryArray.filter((q) => q !== "").join("&"); // searchTerm=John&speciality=Cardiology&speciality=Neurology
     return queryString;
 }
+
+export function formatShortDate(date: string | Date): string {
+  return new Date(date).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}

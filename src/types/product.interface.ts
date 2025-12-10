@@ -101,7 +101,6 @@ export interface IProduct {
   _count?: {
     productReviews: number;
     wishlists: number;
-    // Add other counts if needed
   };
 }
 
