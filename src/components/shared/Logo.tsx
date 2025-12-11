@@ -16,14 +16,14 @@ const Logo = ({
           className
         )}
       >
-        Pengui
+        GenZ
         <span
           className={cn(
             "text-shop_light_green group-hover:text-shop_dark_green hoverEffect",
             spanDesign
           )}
         >
-          n
+          Mart
         </span>
       </h2>
     </Link>

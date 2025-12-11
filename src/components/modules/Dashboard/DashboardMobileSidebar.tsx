@@ -20,18 +20,18 @@ interface DashboardMobileSidebarContentProps {
 const DashboardMobileSidebar = ({
   userInfo,
   navItems,
-  dashboardHome,
+  // dashboardHome,
 }: DashboardMobileSidebarContentProps) => {
   const pathname = usePathname();
   return (
     <div className=" flex h-full flex-col">
       {/* Logo */}
       <div className="flex h-16 items-center border-b px-6">
-        <Link href={dashboardHome} className="flex items-center space-x-2">
+        <Link href={"/"} className="flex items-center space-x-2">
           <h2 className="text-2xl text-shop_dark_green font-black tracking-wider uppercase hover:text-shop_light_green hoverEffect group font-sans">
-            Pengui
+            GenZ
             <span className="text-shop_light_green group-hover:text-shop_dark_green hoverEffect">
-              n
+              Mart
             </span>
           </h2>
         </Link>

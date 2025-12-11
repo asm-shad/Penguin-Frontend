@@ -5,7 +5,7 @@ import ImageView from "@/components/modules/SingleProduct/ImageView";
 import ProductCharacteristics from "@/components/modules/SingleProduct/ProductCharacteristics";
 import ProductDetails from "@/components/modules/SingleProduct/ProductDetails";
 import Container from "@/components/shared/Container";
-import { fetchProductBySlug } from "@/services/product/product.actions";
+import { getProductBySlug } from "@/services/product/product.actions";
 import { CornerDownLeft, StarIcon, Truck } from "lucide-react";
 import { notFound } from "next/navigation";
 import { FaRegQuestionCircle } from "react-icons/fa";
@@ -21,7 +21,7 @@ const SingleProductPage = async ({
   const { slug } = await params;
 
   // Fetch product using your backend API
-  const productResult = await fetchProductBySlug(slug);
+  const productResult = await getProductBySlug(slug);
 
   if (!productResult.success || !productResult.data) {
     return notFound();

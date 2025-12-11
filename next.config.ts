@@ -16,6 +16,12 @@ const nextConfig = {
       },
     ],
   },
+  // Increase Server Actions body size limit
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb', // Increase to 10MB or more as needed
+    },
+  },
 };
 
 module.exports = nextConfig;

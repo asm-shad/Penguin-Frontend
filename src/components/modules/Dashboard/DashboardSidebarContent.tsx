@@ -19,7 +19,7 @@ interface DashboardSidebarContentProps {
 const DashboardSidebarContent = ({
   userInfo,
   navItems,
-  dashboardHome,
+  // dashboardHome,
 }: DashboardSidebarContentProps) => {
   const pathname = usePathname();
 
@@ -28,11 +28,11 @@ const DashboardSidebarContent = ({
     <div className="hidden md:flex w-64 flex-col border-r bg-card overflow-hidden" style={{ height: "calc(100vh - 4rem)" }}>
       {/* Logo/Brand - Fixed height */}
       <div className="flex h-16 shrink-0 items-center border-b px-6">
-        <Link href={dashboardHome} className="flex items-center space-x-2">
+        <Link href={"/"} className="flex items-center space-x-2">
           <h2 className="text-2xl text-shop_dark_green font-black tracking-wider uppercase hover:text-shop_light_green hoverEffect group font-sans">
-            Pengui
+            GenZ
             <span className="text-shop_light_green group-hover:text-shop_dark_green hoverEffect">
-              n
+              Mart
             </span>
           </h2>
         </Link>

@@ -7,11 +7,30 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from "@/components/ui/dialog";
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
+import {
+  createProduct,
+  updateProduct,
+} from "@/services/product/product.actions";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
+import { toast } from "sonner";
+import Image from "next/image";
+import { IBrand, ICategory, IProduct } from "@/types/product.interface";
+import { ProductStatusType, ProductStatus } from "@/types/user.interface";
+import { X, Upload } from "lucide-react";
+import CategoryBrandMultiSelect from "./CategoryBrandMultiSelect";
+import { useCategoryBrandSelection } from "@/hooks/UseCategoryBrandSelectionProps";
 import {
   Select,
   SelectContent,
@@ -19,15 +38,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { createProduct, updateProduct } from "@/services/product/product.actions";
-import { useActionState, useEffect, useRef, useState, useCallback, useTransition } from "react";
-import { toast } from "sonner";
-import Image from "next/image";
-import { IBrand, ICategory, IProduct } from "@/types/product.interface";
-import { ProductStatusType, ProductStatus } from "@/types/user.interface";
-import { X } from "lucide-react";
-import CategoryBrandMultiSelect from "./CategoryBrandMultiSelect";
-import { useCategoryBrandSelection } from "@/hooks/UseCategoryBrandSelectionProps";
+import { Card, CardContent } from "@/components/ui/card";
 
 interface IProductFormDialogProps {
   open: boolean;
@@ -37,6 +48,11 @@ interface IProductFormDialogProps {
   categories: ICategory[];
   brands: IBrand[];
 }
+
+// Maximum file size (5MB)
+const MAX_FILE_SIZE = 5 * 1024 * 1024;
+// Maximum number of files
+const MAX_FILE_COUNT = 10;
 
 const ProductFormDialog = ({
   open,
@@ -50,153 +66,57 @@ const ProductFormDialog = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const isEdit = !!product;
 
+  const [status, setStatus] = useState<ProductStatusType>(
+    product?.status || ProductStatus.NEW
+  );
+  const [isFeatured, setIsFeatured] = useState(product?.isFeatured || false);
+  const [hasDiscount, setHasDiscount] = useState(
+    product?.discount ? product.discount > 0 : false
+  );
 
- const categoryBrandSelection = useCategoryBrandSelection({
+  // FIX 1: Keep existing image URLs separate from new file previews
+  const [existingImageUrls, setExistingImageUrls] = useState<string[]>(
+    product?.productImages?.map((img) => img.imageUrl) || []
+  );
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+
+  const categoryBrandSelection = useCategoryBrandSelection({
     product,
     isEdit,
     open,
   });
 
- const getCategoryTitle = (id: string): string => {
-   return categories.find((c) => c.id === id)?.name || "Unknown Category";
- };
-
- const getBrandTitle = (id: string): string => {
-   return brands.find((b) => b.id === id)?.name || "Unknown Brand";
- };
-
-const [state, formAction, pending] = useActionState(
-  isEdit ? updateProduct.bind(null, product.id) : createProduct,
-  null
-);
-
-  useEffect(() => {
-    if (state?.success) {
-      toast.success(state.message);
-      if (formRef.current) {
-        formRef.current.reset();
-      }
-      onSuccess();
-      onClose();
-    } else if (state && !state.success) {
-      toast.error(state.message);
-
-    //   if (selectedFile && fileInputRef.current) {
-    //     const dataTransfer = new DataTransfer();
-    //     dataTransfer.items.add(selectedFile);
-    //     fileInputRef.current.files = dataTransfer.files;
-    //   }
-    }
-  }, [state, onSuccess, onClose, selectedFile]);
-
-
-const [isPending, startTransition] = useTransition();
-
-const [status, setStatus] = useState<ProductStatusType>(
-  product?.status || ProductStatus.NEW
-);
-
-  const [isFeatured, setIsFeatured] = useState(product?.isFeatured || false);
-  const [isActive, setIsActive] = useState(product?.isActive ?? true);
-  const [hasDiscount, setHasDiscount] = useState(
-    product?.discount ? product.discount > 0 : false
-  );
-  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>(
-    product?.productImages?.map(img => img.imageUrl) || []
-  );
-
-  // Track processed state to prevent loops
+  // FIX: Add ref to track processed state
   const processedStateRef = useRef<string | null>(null);
-  const imagePreviewsRef = useRef<string[]>([]);
-  const selectedFilesRef = useRef<File[]>([]);
 
-  // Keep refs in sync with state
-  useEffect(() => {
-    imagePreviewsRef.current = imagePreviews;
-    selectedFilesRef.current = selectedFiles;
-  }, [imagePreviews, selectedFiles]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
-    const newFiles = [...selectedFiles, ...files];
-    setSelectedFiles(newFiles);
-
-    const newPreviews = files.map((file) => URL.createObjectURL(file));
-    setImagePreviews((prev) => [...prev, ...newPreviews]);
+  const getCategoryTitle = (id: string): string => {
+    return categories.find((c) => c.id === id)?.name || "Unknown Category";
   };
 
-  const removeImage = useCallback((index: number) => {
-    setImagePreviews((prev) => {
-      const newPreviews = [...prev];
-      const previewToRemove = newPreviews[index];
-      if (previewToRemove.startsWith("blob:")) {
-        URL.revokeObjectURL(previewToRemove);
-      }
-      return newPreviews.filter((_, i) => i !== index);
-    });
-    
-    setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
-  }, []);
+  const getBrandTitle = (id: string): string => {
+    return brands.find((b) => b.id === id)?.name || "Unknown Brand";
+  };
 
-  // Fix: Use bind like in DoctorFormDialog
+  // FIX: Properly bind the product ID for edit mode
+  const updateProductWithId = isEdit 
+    ? updateProduct.bind(null, product.id)  // Bind product ID as first parameter
+    : createProduct;
 
+  // Use useActionState to get the state from server actions
+  const [state, formAction, pending] = useActionState(
+    updateProductWithId,
+    null
+  );
 
-  const handleClose = useCallback(() => {
-    // Clean up object URLs using ref
-    imagePreviewsRef.current.forEach((preview) => {
-      if (preview.startsWith("blob:")) {
-        URL.revokeObjectURL(preview);
-      }
-    });
-
-    // Use transition for state resets
-    startTransition(() => {
-      setSelectedFiles([]);
-      setImagePreviews([]);
-      setStatus(ProductStatus.NEW);
-      setIsFeatured(false);
-      setIsActive(true);
-      setHasDiscount(false);
-    });
-
-    if (fileInputRef.current) {
-      fileInputRef.current.value = "";
-    }
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-
-    onClose();
-  }, [onClose]);
-
-  // Initialize form when opening
+  // Reset processed state when dialog opens/closes
   useEffect(() => {
     if (open) {
       processedStateRef.current = null;
-      
-      // Use transition for initialization
-      startTransition(() => {
-        if (product) {
-          setStatus(product.status || ProductStatus.NEW);
-          setIsFeatured(product.isFeatured || false);
-          setIsActive(product.isActive ?? true);
-          setHasDiscount(product.discount ? product.discount > 0 : false);
-          setImagePreviews(product.productImages?.map(img => img.imageUrl) || []);
-        } else {
-          // Reset to defaults for new product
-          setStatus(ProductStatus.NEW);
-          setIsFeatured(false);
-          setIsActive(true);
-          setHasDiscount(false);
-          setSelectedFiles([]);
-          setImagePreviews([]);
-        }
-      });
     }
-  }, [open, product]);
+  }, [open]);
 
-  // Handle state changes without causing cascading renders
+  // Handle the state from server actions
   useEffect(() => {
     // Don't process if dialog is closed or no state
     if (!open || !state) return;
@@ -209,56 +129,148 @@ const [status, setStatus] = useState<ProductStatusType>(
       processedStateRef.current = stateKey;
       
       if (state.success) {
-        toast.success(state.message || "Product saved successfully");
+        toast.success(state.message);
+        if (formRef.current) {
+          formRef.current.reset();
+        }
         
-        // Clean up object URLs using ref instead of state
-        const previewsToClean = imagePreviewsRef.current;
-        previewsToClean.forEach((preview) => {
+        // Clean up object URLs
+        imagePreviews.forEach((preview) => {
           if (preview.startsWith("blob:")) {
             URL.revokeObjectURL(preview);
           }
         });
         
-        // Use transition for state resets
-        startTransition(() => {
-          setSelectedFiles([]);
-          setImagePreviews([]);
-          setStatus(ProductStatus.NEW);
-          setIsFeatured(false);
-          setIsActive(true);
-          setHasDiscount(false);
-        });
-        
-        // Clear file input
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
-        if (formRef.current) {
-          formRef.current.reset();
-        }
-        
-        // Close dialog and trigger success callbacks
+        // Close dialog first, then trigger success
         setTimeout(() => {
           onClose();
+          // Small delay before success callback
           setTimeout(() => {
             onSuccess();
           }, 50);
         }, 100);
-      } else if (!state.success && state.message) {
-        toast.error(state.message || "Failed to save product");
-        
-        // Re-populate file input if there was an error using ref
-        const filesToRestore = selectedFilesRef.current;
-        if (filesToRestore.length > 0 && fileInputRef.current) {
+      } else if (state && !state.success) {
+        toast.error(state.message);
+
+        // FIX 2: Properly restore multiple files
+        if (selectedFiles.length > 0 && fileInputRef.current) {
           const dataTransfer = new DataTransfer();
-          filesToRestore.forEach(file => dataTransfer.items.add(file));
+          selectedFiles.forEach((file) => {
+            dataTransfer.items.add(file);
+          });
           fileInputRef.current.files = dataTransfer.files;
         }
       }
     }
-  }, [state, open, onSuccess, onClose, startTransition]); // Added startTransition to dependencies
+  }, [state, open, onSuccess, onClose, selectedFiles, imagePreviews]);
 
-  const combinedPending = pending || isPending;
+  const validateFiles = (files: File[]): { valid: boolean; message?: string } => {
+    // Check file count
+    const totalFiles = selectedFiles.length + files.length;
+    if (totalFiles > MAX_FILE_COUNT) {
+      return {
+        valid: false,
+        message: `Maximum ${MAX_FILE_COUNT} images allowed. You have ${selectedFiles.length} and trying to add ${files.length} more.`,
+      };
+    }
+
+    // Check file sizes and types
+    for (const file of files) {
+      if (file.size > MAX_FILE_SIZE) {
+        return {
+          valid: false,
+          message: `File "${file.name}" is too large. Maximum size is ${MAX_FILE_SIZE / 1024 / 1024}MB.`,
+        };
+      }
+
+      if (!file.type.startsWith('image/')) {
+        return {
+          valid: false,
+          message: `File "${file.name}" is not an image.`,
+        };
+      }
+    }
+
+    return { valid: true };
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    
+    // Validate files
+    const validation = validateFiles(files);
+    if (!validation.valid) {
+      toast.error(validation.message);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+      return;
+    }
+
+    const newFiles = [...selectedFiles, ...files];
+    setSelectedFiles(newFiles);
+
+    const newPreviews = files.map((file) => URL.createObjectURL(file));
+    setImagePreviews((prev) => [...prev, ...newPreviews]);
+    
+    // Show success toast
+    toast.success(`Added ${files.length} image${files.length > 1 ? 's' : ''}`);
+  };
+
+  const removeImage = useCallback(
+    (index: number, isExisting: boolean = false) => {
+      if (isExisting) {
+        // Remove from existing images
+        setExistingImageUrls((prev) => prev.filter((_, i) => i !== index));
+        toast.info("Existing image will be removed on save");
+      } else {
+        // Remove from new uploads
+        setImagePreviews((prev) => {
+          const newPreviews = [...prev];
+          const previewToRemove = newPreviews[index];
+          if (previewToRemove.startsWith("blob:")) {
+            URL.revokeObjectURL(previewToRemove);
+          }
+          return newPreviews.filter((_, i) => i !== index);
+        });
+
+        setSelectedFiles((prev) => prev.filter((_, i) => i !== index));
+        toast.info("Image removed");
+      }
+    },
+    []
+  );
+
+  // FIX 3: Proper cleanup
+  const handleClose = () => {
+    // Clean up object URLs
+    imagePreviews.forEach((preview) => {
+      if (preview.startsWith("blob:")) {
+        URL.revokeObjectURL(preview);
+      }
+    });
+
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+
+    // Reset states
+    setSelectedFiles([]);
+    setImagePreviews([]);
+    setExistingImageUrls(product?.productImages?.map((img) => img.imageUrl) || []);
+    setStatus(product?.status || ProductStatus.NEW);
+    setIsFeatured(product?.isFeatured || false);
+    setHasDiscount(product?.discount ? product.discount > 0 : false);
+
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+
+    onClose();
+  };
+
+  // Combine existing and new images for display
+  const allImages = [...existingImageUrls, ...imagePreviews];
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
@@ -267,316 +279,392 @@ const [status, setStatus] = useState<ProductStatusType>(
           <DialogTitle>
             {isEdit ? "Edit Product" : "Add New Product"}
           </DialogTitle>
+          <DialogDescription>
+            {isEdit 
+              ? "Update product details, pricing, and images." 
+              : "Fill in the product details to add a new product to your store."
+            }
+          </DialogDescription>
         </DialogHeader>
 
-        <form ref={formRef} action={formAction} className="space-y-6">
-          {/* Important: Add hidden ID field for updateProduct to find */}
-          {isEdit && <input type="hidden" name="id" value={product.id} />}
-
-          {/* Hidden inputs for arrays */}
+        <form
+          ref={formRef}
+          action={formAction} 
+          className="flex flex-col flex-1 min-h-0 space-y-6"
+        >
+          {/* Hidden fields for form data */}
+          <input type="hidden" name="status" value={status} />
+          <input type="hidden" name="isFeatured" value={isFeatured.toString()} />
           <input 
             type="hidden" 
             name="categoryIds" 
-            value={JSON.stringify(categoryBrandSelection.selectedCategoryIds)} 
+            value={JSON.stringify(categoryBrandSelection.selectedCategoryIds)}
           />
           <input 
             type="hidden" 
             name="brandId" 
-            value={categoryBrandSelection.selectedBrandId} 
+            value={categoryBrandSelection.selectedBrandId || ""}
           />
           <input 
             type="hidden" 
-            name="status" 
-            value={status} 
+            name="variants" 
+            value="[]" 
           />
-          <input 
-            type="hidden" 
-            name="isFeatured" 
-            value={isFeatured.toString()} 
-          />
-          <input 
-            type="hidden" 
-            name="isActive" 
-            value={isActive.toString()} 
-          />
+          
+          {/* Basic Information Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Basic Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <Field>
+                  <FieldLabel htmlFor="name">
+                    Product Name <span className="text-red-500">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="name"
+                    name="name"
+                    placeholder="Enter product name"
+                    defaultValue={
+                      state?.formData?.name || (isEdit ? product?.name : "")
+                    }
+                    required
+                    disabled={pending}
+                  />
+                  <InputFieldError field="name" state={state} />
+                </Field>
 
-          {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field>
-              <FieldLabel htmlFor="name">
-                Product Name <span className="text-red-500">*</span>
-              </FieldLabel>
-              <Input
-                id="name"
-                name="name"
-                placeholder="Enter product name"
-                defaultValue={
-                  state?.formData?.name || (isEdit ? product?.name : "")
-                }
-                required
-                disabled={combinedPending}
-              />
-              <InputFieldError field="name" state={state} />
-            </Field>
+                <Field>
+                  <FieldLabel htmlFor="slug">
+                    Slug <span className="text-red-500">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="slug"
+                    name="slug"
+                    placeholder="product-slug"
+                    defaultValue={
+                      state?.formData?.slug || (isEdit ? product?.slug : "")
+                    }
+                    required
+                    disabled={pending}
+                  />
+                  <InputFieldError field="slug" state={state} />
+                </Field>
+              </div>
 
-            <Field>
-              <FieldLabel htmlFor="slug">
-                Slug <span className="text-red-500">*</span>
-              </FieldLabel>
-              <Input
-                id="slug"
-                name="slug"
-                placeholder="product-slug"
-                defaultValue={
-                  state?.formData?.slug || (isEdit ? product?.slug : "")
-                }
-                required
-                disabled={combinedPending}
-              />
-              <InputFieldError field="slug" state={state} />
-            </Field>
-          </div>
-
-          <Field>
-            <FieldLabel htmlFor="description">
-              Description <span className="text-red-500">*</span>
-            </FieldLabel>
-            <Textarea
-              id="description"
-              name="description"
-              placeholder="Enter product description"
-              defaultValue={
-                state?.formData?.description || 
-                (isEdit ? product?.description : "")
-              }
-              rows={4}
-              required
-              disabled={combinedPending}
-            />
-            <InputFieldError field="description" state={state} />
-          </Field>
-
-            {/* Category & Brand Selection */}
-            <div className="space-y-4">
-              <h3 className="text-lg font-semibold">Category & Brand</h3>
-              
-                <CategoryBrandMultiSelect
-                    // Categories
-                    selectedCategoryIds={categoryBrandSelection.selectedCategoryIds}
-                    removedCategoryIds={categoryBrandSelection.removedCategoryIds}
-                    currentCategoryId={categoryBrandSelection.currentCategoryId}
-                    availableCategories={categoryBrandSelection.getAvailableCategories(categories)}
-                    
-                    // Brand
-                    selectedBrandId={categoryBrandSelection.selectedBrandId}
-                    removedBrandId={categoryBrandSelection.removedBrandId}
-                    availableBrands={categoryBrandSelection.getAvailableBrands(brands)}
-                    
-                    isEdit={isEdit}
-                    onCurrentCategoryChange={categoryBrandSelection.setCurrentCategoryId}
-                    onAddCategory={categoryBrandSelection.handleAddCategory}
-                    onRemoveCategory={categoryBrandSelection.handleRemoveCategory}
-                    onBrandChange={categoryBrandSelection.handleBrandChange}
-                    onRemoveBrand={categoryBrandSelection.handleRemoveBrand}
-                    getCategoryTitle={getCategoryTitle}
-                    getBrandTitle={getBrandTitle}
-                    getNewCategories={categoryBrandSelection.getNewCategories}
+              <Field className="mt-4">
+                <FieldLabel htmlFor="description">
+                  Description <span className="text-red-500">*</span>
+                </FieldLabel>
+                <Textarea
+                  id="description"
+                  name="description"
+                  placeholder="Enter product description"
+                  defaultValue={
+                    state?.formData?.description ||
+                    (isEdit ? product?.description : "")
+                  }
+                  rows={4}
+                  required
+                  disabled={pending}
                 />
-              
+                <InputFieldError field="description" state={state} />
+              </Field>
+            </CardContent>
+          </Card>
+
+          {/* Category & Brand Selection */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Category & Brand</h3>
+              <CategoryBrandMultiSelect
+                // Categories
+                selectedCategoryIds={categoryBrandSelection.selectedCategoryIds}
+                removedCategoryIds={categoryBrandSelection.removedCategoryIds}
+                currentCategoryId={categoryBrandSelection.currentCategoryId}
+                availableCategories={categoryBrandSelection.getAvailableCategories(
+                  categories
+                )}
+                // Brand
+                selectedBrandId={categoryBrandSelection.selectedBrandId}
+                removedBrandId={categoryBrandSelection.removedBrandId}
+                availableBrands={categoryBrandSelection.getAvailableBrands(
+                  brands
+                )}
+                isEdit={isEdit}
+                onCurrentCategoryChange={
+                  categoryBrandSelection.setCurrentCategoryId
+                }
+                onAddCategory={categoryBrandSelection.handleAddCategory}
+                onRemoveCategory={categoryBrandSelection.handleRemoveCategory}
+                onBrandChange={categoryBrandSelection.handleBrandChange}
+                onRemoveBrand={categoryBrandSelection.handleRemoveBrand}
+                getCategoryTitle={getCategoryTitle}
+                getBrandTitle={getBrandTitle}
+                getNewCategories={categoryBrandSelection.getNewCategories}
+              />
               <InputFieldError field="categoryIds" state={state} />
               <InputFieldError field="brandId" state={state} />
-            </div>
+            </CardContent>
+          </Card>
 
-          {/* Pricing Section */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Field>
-              <FieldLabel htmlFor="price">
-                Price ($) <span className="text-red-500">*</span>
-              </FieldLabel>
-              <Input
-                id="price"
-                name="price"
-                type="number"
-                step="0.01"
-                min="0"
-                placeholder="0.00"
-                defaultValue={
-                  state?.formData?.price || 
-                  (isEdit ? product?.price?.toString() : "")
-                }
-                required
-                disabled={combinedPending}
-              />
-              <InputFieldError field="price" state={state} />
-            </Field>
+          {/* Pricing & Details Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Pricing & Details</h3>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <Field>
+                  <FieldLabel htmlFor="price">
+                    Price ($) <span className="text-red-500">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0.00"
+                    defaultValue={
+                      state?.formData?.price ||
+                      (isEdit ? product?.price?.toString() : "")
+                    }
+                    required
+                    disabled={pending}
+                  />
+                  <InputFieldError field="price" state={state} />
+                </Field>
 
-            <Field>
-              <FieldLabel htmlFor="stock">
-                Stock Quantity <span className="text-red-500">*</span>
-              </FieldLabel>
-              <Input
-                id="stock"
-                name="stock"
-                type="number"
-                min="0"
-                placeholder="0"
-                defaultValue={
-                  state?.formData?.stock || 
-                  (isEdit ? product?.stock?.toString() : "")
-                }
-                required
-                disabled={combinedPending}
-              />
-              <InputFieldError field="stock" state={state} />
-            </Field>
+                <Field>
+                  <FieldLabel htmlFor="stock">
+                    Stock Quantity <span className="text-red-500">*</span>
+                  </FieldLabel>
+                  <Input
+                    id="stock"
+                    name="stock"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    defaultValue={
+                      state?.formData?.stock ||
+                      (isEdit ? product?.stock?.toString() : "")
+                    }
+                    required
+                    disabled={pending}
+                  />
+                  <InputFieldError field="stock" state={state} />
+                </Field>
 
-            <Field>
-              <FieldLabel htmlFor="sku">
-                SKU
-              </FieldLabel>
-              <Input
-                id="sku"
-                name="sku"
-                placeholder="PROD-001"
-                defaultValue={
-                  state?.formData?.sku || (isEdit ? product?.sku : "")
-                }
-                disabled={combinedPending}
-              />
-              <InputFieldError field="sku" state={state} />
-            </Field>
-          </div>
-
-          {/* Discount Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field>
-              <div className="flex items-center justify-between">
-                <FieldLabel htmlFor="discount">Discount (%)</FieldLabel>
-                <Switch
-                  id="hasDiscount"
-                  checked={hasDiscount}
-                  onCheckedChange={setHasDiscount}
-                  disabled={combinedPending}
-                />
+                <Field>
+                  <FieldLabel htmlFor="sku">SKU (Optional)</FieldLabel>
+                  <Input
+                    id="sku"
+                    name="sku"
+                    placeholder="PROD-001"
+                    defaultValue={
+                      state?.formData?.sku || (isEdit ? product?.sku : "")
+                    }
+                    disabled={pending}
+                  />
+                  <InputFieldError field="sku" state={state} />
+                </Field>
               </div>
-              {hasDiscount && (
-                <Input
-                  id="discount"
-                  name="discount"
-                  type="number"
-                  min="0"
-                  max="100"
-                  placeholder="Discount percentage"
-                  defaultValue={
-                    state?.formData?.discount || 
-                    (isEdit ? product?.discount?.toString() : "0")
-                  }
-                  className="mt-2"
-                  disabled={combinedPending}
-                />
-              )}
-              <InputFieldError field="discount" state={state} />
-            </Field>
 
-            <Field>
-              <FieldLabel htmlFor="status">Product Status</FieldLabel>
-              <Select
-                value={status}
-                onValueChange={(value) => setStatus(value as ProductStatusType)}
-                disabled={combinedPending}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Select status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value={ProductStatus.NEW}>New Arrival</SelectItem>
-                  <SelectItem value={ProductStatus.HOT}>Hot</SelectItem>
-                  <SelectItem value={ProductStatus.SALE}>On Sale</SelectItem>
-                  <SelectItem value={ProductStatus.OUT_OF_STOCK}>Out of Stock</SelectItem>
-                  <SelectItem value={ProductStatus.DISCONTINUED}>Discontinued</SelectItem>
-                </SelectContent>
-              </Select>
-              <InputFieldError field="status" state={state} />
-            </Field>
-          </div>
+              {/* Discount & Status Row */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                <Field>
+                  <div className="flex items-center justify-between">
+                    <FieldLabel htmlFor="discount">Discount (%)</FieldLabel>
+                    <Switch
+                      id="hasDiscount"
+                      checked={hasDiscount}
+                      onCheckedChange={setHasDiscount}
+                      disabled={pending}
+                    />
+                  </div>
+                  {hasDiscount && (
+                    <Input
+                      id="discount"
+                      name="discount"
+                      type="number"
+                      min="0"
+                      max="100"
+                      placeholder="Discount percentage"
+                      defaultValue={
+                        state?.formData?.discount ||
+                        (isEdit ? product?.discount?.toString() : "0")
+                      }
+                      className="mt-2"
+                      disabled={pending}
+                    />
+                  )}
+                  <InputFieldError field="discount" state={state} />
+                </Field>
+
+                <Field>
+                  <FieldLabel htmlFor="statusSelect">Product Status</FieldLabel>
+                  <Select
+                    value={status}
+                    onValueChange={(value) => setStatus(value as ProductStatusType)}
+                    disabled={pending}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={ProductStatus.NEW}>New Arrival</SelectItem>
+                      <SelectItem value={ProductStatus.HOT}>Hot</SelectItem>
+                      <SelectItem value={ProductStatus.SALE}>On Sale</SelectItem>
+                      <SelectItem value={ProductStatus.OUT_OF_STOCK}>
+                        Out of Stock
+                      </SelectItem>
+                      <SelectItem value={ProductStatus.DISCONTINUED}>
+                        Discontinued
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <InputFieldError field="status" state={state} />
+                </Field>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Images Section */}
-          <Field>
-            <FieldLabel htmlFor="images">Product Images</FieldLabel>
-            <Input
-              ref={fileInputRef}
-              onChange={handleFileChange}
-              id="images"
-              name="images"
-              type="file"
-              accept="image/*"
-              multiple
-              disabled={combinedPending}
-            />
-            {imagePreviews.length > 0 && (
-              <div className="mt-4 grid grid-cols-4 gap-3">
-                {imagePreviews.map((preview, index) => (
-                  <div key={index} className="relative group">
-                    <Image
-                      src={preview}
-                      alt={`Preview ${index + 1}`}
-                      width={100}
-                      height={100}
-                      className="w-full h-24 object-cover rounded-md"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(index)}
-                      disabled={combinedPending}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity disabled:opacity-50"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Product Images</h3>
+              <div className="space-y-4">
+                <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                  <Upload className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                  <FieldLabel htmlFor="images" className="block mb-2">
+                    Upload Images
+                  </FieldLabel>
+                  <p className="text-sm text-gray-500 mb-4">
+                    Upload up to {MAX_FILE_COUNT} images. Max {MAX_FILE_SIZE / 1024 / 1024}MB each.
+                    Supported: JPG, PNG, WebP
+                  </p>
+                  <Input
+                    ref={fileInputRef}
+                    onChange={handleFileChange}
+                    id="images"
+                    name="files"
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    className="hidden"
+                    disabled={pending}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={pending || allImages.length >= MAX_FILE_COUNT}
+                  >
+                    <Upload className="h-4 w-4 mr-2" />
+                    Choose Files
+                  </Button>
+                  {selectedFiles.length > 0 && (
+                    <p className="text-sm text-gray-600 mt-2">
+                      {selectedFiles.length} new file{selectedFiles.length > 1 ? 's' : ''} selected
+                    </p>
+                  )}
+                </div>
+
+                {/* Image previews */}
+                {allImages.length > 0 && (
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <h4 className="font-medium">Preview ({allImages.length}/{MAX_FILE_COUNT})</h4>
+                      <p className="text-sm text-gray-500">Click × to remove</p>
+                    </div>
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                      {allImages.map((image, index) => {
+                        const isExisting = index < existingImageUrls.length;
+                        const displayIndex = index + 1;
+
+                        return (
+                          <div 
+                            key={`image-${index}-${isExisting ? "existing" : "new"}`} 
+                            className="relative group border rounded-lg overflow-hidden"
+                          >
+                            <div className="aspect-square relative">
+                              <Image
+                                src={image}
+                                alt={`Product image ${displayIndex}`}
+                                fill
+                                className="object-cover"
+                                sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                removeImage(
+                                  isExisting
+                                    ? index
+                                    : index - existingImageUrls.length,
+                                  isExisting
+                                )
+                              }
+                              className="absolute top-1 right-1 bg-red-500 text-white rounded-full p-1 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-600"
+                              disabled={pending}
+                            >
+                              <X className="h-3 w-3" />
+                            </button>
+                            {isExisting && (
+                              <div className="absolute bottom-1 left-1 text-xs bg-blue-600 text-white px-2 py-1 rounded">
+                                Existing
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
-                ))}
+                )}
+                <InputFieldError field="images" state={state} />
               </div>
-            )}
-            <InputFieldError field="images" state={state} />
-          </Field>
+            </CardContent>
+          </Card>
 
-          {/* Toggles */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Field className="flex items-center justify-between">
-              <FieldLabel htmlFor="isFeatured">Featured Product</FieldLabel>
-              <Switch
-                id="isFeatured"
-                checked={isFeatured}
-                onCheckedChange={setIsFeatured}
-                disabled={combinedPending}
-              />
-            </Field>
+          {/* Settings Section */}
+          <Card>
+            <CardContent className="pt-6">
+              <h3 className="text-lg font-semibold mb-4">Settings</h3>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <FieldLabel htmlFor="isFeatured" className="text-sm font-medium">
+                      Featured Product
+                    </FieldLabel>
+                    <p className="text-xs text-gray-500">Show in featured sections</p>
+                  </div>
+                  <Switch
+                    id="isFeatured"
+                    checked={isFeatured}
+                    onCheckedChange={setIsFeatured}
+                    disabled={pending}
+                    className="ml-4"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-            <Field className="flex items-center justify-between">
-              <FieldLabel htmlFor="isActive">Active</FieldLabel>
-              <Switch
-                id="isActive"
-                checked={isActive}
-                onCheckedChange={setIsActive}
-                disabled={combinedPending}
-              />
-            </Field>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
+          {/* Form Actions */}
+          <div className="flex justify-end gap-2 pt-4 border-t">
             <Button
               type="button"
               variant="outline"
               onClick={handleClose}
-              disabled={combinedPending}
+              disabled={pending}
             >
               Cancel
             </Button>
-            <Button type="submit" disabled={combinedPending}>
-              {combinedPending
-                ? "Saving..."
-                : isEdit
-                ? "Update Product"
-                : "Create Product"}
+            <Button 
+              type="submit" 
+              disabled={pending}
+              className="min-w-[120px]"
+            >
+              {pending ? "Saving..." : isEdit ? "Update Product" : "Create Product"}
             </Button>
           </div>
         </form>

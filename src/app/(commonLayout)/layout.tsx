@@ -4,10 +4,10 @@ import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: {
-    template: "%s - Shopcart online store",
-    default: "Shopcart online store",
+    template: "%s - GenZMart online store",
+    default: "GenZMart online store",
   },
-  description: "Shopcart online store, Your one stop shop for all your needs",
+  description: "GenZMart online store, Your one stop shop for all your needs",
 };
 
 export default function CommonDashboardLayout({

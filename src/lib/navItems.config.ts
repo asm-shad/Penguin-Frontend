@@ -11,9 +11,9 @@ export const getCommonNavItems = (role: UserRole): NavSection[] => {
     {
       items: [
         {
-          title: "Dashboard",
+          title: role === "USER" ? "Home" : "Dashboard",
           href: defaultDashboard,
-          icon: "LayoutDashboard",
+          icon: role === "USER" ? "Home" : "LayoutDashboard",
           roles: [
             "SUPER_ADMIN",
             "ADMIN",
@@ -90,12 +90,6 @@ export const userNavItems: NavSection[] = [
     title: "Shopping",
     items: [
       {
-        title: "Shop Products",
-        href: "/shop",
-        icon: "ShoppingBag",
-        roles: ["USER"],
-      },
-      {
         title: "Categories",
         href: "/categories",
         icon: "Layers",
@@ -128,12 +122,6 @@ export const userNavItems: NavSection[] = [
         title: "Track Order",
         href: "/dashboard/track-order",
         icon: "Truck",
-        roles: ["USER"],
-      },
-      {
-        title: "My Wishlist",
-        href: "/dashboard/wishlist",
-        icon: "Heart",
         roles: ["USER"],
       },
       {
@@ -210,42 +198,36 @@ export const superAdminNavItems: NavSection[] = [
         icon: "Briefcase",
         roles: ["SUPER_ADMIN", "ADMIN"],
       },
-      {
-        title: "Audit Logs",
-        href: "/admin/audit-logs",
-        icon: "FileText",
-        roles: ["SUPER_ADMIN"],
-      },
     ],
   },
 ];
 
 // ADMIN Nav Items
-export const adminNavItems: NavSection[] = [
-  {
-    title: "Admin Dashboard",
-    items: [
-      {
-        title: "Admin Home",
-        href: "/admin/dashboard",
-        icon: "LayoutDashboard",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-      {
-        title: "Sales Overview",
-        href: "/admin/sales",
-        icon: "TrendingUp",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-      {
-        title: "Financial Reports",
-        href: "/admin/reports",
-        icon: "PieChart",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-    ],
-  },
-];
+// export const adminNavItems: NavSection[] = [
+//   {
+//     title: "Admin Dashboard",
+//     items: [
+//       {
+//         title: "Admin Home",
+//         href: "/admin/dashboard",
+//         icon: "LayoutDashboard",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//       {
+//         title: "Sales Overview",
+//         href: "/admin/sales",
+//         icon: "TrendingUp",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//       {
+//         title: "Financial Reports",
+//         href: "/admin/reports",
+//         icon: "PieChart",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//     ],
+//   },
+// ];
 
 // PRODUCT_MANAGER Nav Items
 export const productManagerNavItems: NavSection[] = [
@@ -278,103 +260,103 @@ export const productManagerNavItems: NavSection[] = [
       },
     ],
   },
-  {
-    title: "Product Variants",
-    items: [
-      {
-        title: "Manage Variants",
-        href: "/admin/variants",
-        icon: "GitBranch",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Add Variant",
-        href: "/admin/variants/add",
-        icon: "GitBranchPlus",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-    ],
-  },
+  // {
+  //   title: "Product Variants",
+  //   items: [
+  //     {
+  //       title: "Manage Variants",
+  //       href: "/admin/variants",
+  //       icon: "GitBranch",
+  //       roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+  //     },
+  //     {
+  //       title: "Add Variant",
+  //       href: "/admin/variants/add",
+  //       icon: "GitBranchPlus",
+  //       roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+  //     },
+  //   ],
+  // },
 ];
 
 // CUSTOMER_SUPPORT Nav Items
-export const customerSupportNavItems: NavSection[] = [
-  {
-    title: "Support Dashboard",
-    items: [
-      {
-        title: "Support Home",
-        href: "/customer-support/dashboard",
-        icon: "LayoutDashboard",
-        roles: ["CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "New Tickets",
-        href: "/admin/support-tickets/new",
-        icon: "MessageSquare",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "All Tickets",
-        href: "/admin/support-tickets",
-        icon: "Inbox",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-    ],
-  },
-  {
-    title: "Customer Management",
-    items: [
-      {
-        title: "Customer Management",
-        href: "/admin/dashboard/customer-management/catalog",
-        icon: "Package",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-      {
-        title: "Customer Issues",
-        href: "/admin/dashboard/customer-management/customer-issues",
-        icon: "AlertCircle",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Order Issues",
-        href: "/admin/dashboard/customer-management/order-issues",
-        icon: "ShoppingCart",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Return Requests",
-        href: "/admin/dashboard/customer-management/returns",
-        icon: "RotateCcw",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-    ],
-  },
-  {
-    title: "Knowledge Base",
-    items: [
-      {
-        title: "FAQs",
-        href: "/admin/faqs",
-        icon: "HelpCircle",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Guides",
-        href: "/admin/guides",
-        icon: "BookOpen",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Manage FAQ",
-        href: "/admin/faqs/manage",
-        icon: "HelpCircle",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-    ],
-  },
-];
+// export const customerSupportNavItems: NavSection[] = [
+//   {
+//     title: "Support Dashboard",
+//     items: [
+//       {
+//         title: "Support Home",
+//         href: "/customer-support/dashboard",
+//         icon: "LayoutDashboard",
+//         roles: ["CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "New Tickets",
+//         href: "/admin/support-tickets/new",
+//         icon: "MessageSquare",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "All Tickets",
+//         href: "/admin/support-tickets",
+//         icon: "Inbox",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//     ],
+//   },
+//   {
+//     title: "Customer Management",
+//     items: [
+//       {
+//         title: "Customer Management",
+//         href: "/admin/dashboard/customer-management/catalog",
+//         icon: "Package",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//       {
+//         title: "Customer Issues",
+//         href: "/admin/dashboard/customer-management/customer-issues",
+//         icon: "AlertCircle",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "Order Issues",
+//         href: "/admin/dashboard/customer-management/order-issues",
+//         icon: "ShoppingCart",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "Return Requests",
+//         href: "/admin/dashboard/customer-management/returns",
+//         icon: "RotateCcw",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//     ],
+//   },
+//   {
+//     title: "Knowledge Base",
+//     items: [
+//       {
+//         title: "FAQs",
+//         href: "/admin/faqs",
+//         icon: "HelpCircle",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "Guides",
+//         href: "/admin/guides",
+//         icon: "BookOpen",
+//         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+//       },
+//       {
+//         title: "Manage FAQ",
+//         href: "/admin/faqs/manage",
+//         icon: "HelpCircle",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//     ],
+//   },
+// ];
 
 // ==================== MANAGEMENT MODULES (Shared across multiple staff roles) ====================
 // ORDER MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, CUSTOMER_SUPPORT)
@@ -480,31 +462,31 @@ export const catalogManagementNavItems: NavSection[] = [
 
 
 // MARKETING MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
-export const marketingManagementNavItems: NavSection[] = [
-  {
-    title: "Marketing Management",
-    items: [
-      {
-        title: "Featured Products",
-        href: "/admin/featured",
-        icon: "Star",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Promotions",
-        href: "/admin/promotions",
-        icon: "Megaphone",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-      {
-        title: "Email Campaigns",
-        href: "/admin/email-campaigns",
-        icon: "Mail",
-        roles: ["SUPER_ADMIN", "ADMIN"],
-      },
-    ],
-  },
-];
+// export const marketingManagementNavItems: NavSection[] = [
+//   {
+//     title: "Marketing Management",
+//     items: [
+//       {
+//         title: "Featured Products",
+//         href: "/admin/featured",
+//         icon: "Star",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//       {
+//         title: "Promotions",
+//         href: "/admin/promotions",
+//         icon: "Megaphone",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//       {
+//         title: "Email Campaigns",
+//         href: "/admin/email-campaigns",
+//         icon: "Mail",
+//         roles: ["SUPER_ADMIN", "ADMIN"],
+//       },
+//     ],
+//   },
+// ];
 
 // BLOG MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
 export const blogNavItems: NavSection[] = [
@@ -554,26 +536,26 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
       return [
         ...commonNavItems,
         ...superAdminNavItems,
-        ...adminNavItems,
+        // ...adminNavItems,
         ...productManagerNavItems,
-        ...customerSupportNavItems,
+        // ...customerSupportNavItems,
         ...orderManagementNavItems,
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
-        ...marketingManagementNavItems,
+        // ...marketingManagementNavItems,
         ...blogNavItems,
       ];
 
     case "ADMIN":
       return [
         ...commonNavItems,
-        ...adminNavItems,
+        // ...adminNavItems,
         ...productManagerNavItems,
-        ...customerSupportNavItems,
+        // ...customerSupportNavItems,
         ...orderManagementNavItems,
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
-        ...marketingManagementNavItems,
+        // ...marketingManagementNavItems,
         ...blogNavItems,
       ];
 
@@ -588,7 +570,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
     case "CUSTOMER_SUPPORT":
       return [
         ...commonNavItems,
-        ...customerSupportNavItems,
+        // ...customerSupportNavItems,
         ...orderManagementNavItems,
         ...customerManagementNavItems,
       ];

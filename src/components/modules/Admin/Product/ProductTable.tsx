@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// components/modules/Product/ProductTable.tsx
 "use client";
 
 import { useState, useTransition } from "react";
@@ -9,7 +8,7 @@ import ManagementTable from "../../Dashboard/shared/ManagementTable";
 import DeleteConfirmationDialog from "../../Dashboard/shared/DeleteConfirmationDialog";
 import ProductViewDialog from "./ProductViewDialog";
 import ProductFormDialog from "./ProductFormDialog";
-import { softDeleteProduct, deleteProduct } from "@/services/product/product.actions";
+import { deleteProduct } from "@/services/product/product.actions";
 import { productColumns } from "./productColumns";
 import { IProduct, IBrand, ICategory } from "@/types/product.interface";
 
@@ -27,7 +26,6 @@ const ProductTable = ({ products, categories, brands }: ProductTableProps) => {
   const [viewingProduct, setViewingProduct] = useState<IProduct | null>(null);
   const [editingProduct, setEditingProduct] = useState<IProduct | null>(null);
   const [deletingProduct, setDeletingProduct] = useState<IProduct | null>(null);
-  const [deleteType, setDeleteType] = useState<"soft" | "hard">("soft");
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleRefresh = () => {
@@ -44,27 +42,20 @@ const ProductTable = ({ products, categories, brands }: ProductTableProps) => {
     setEditingProduct(product);
   };
 
-  const handleDelete = (product: IProduct, type: "soft" | "hard" = "soft") => {
+  const handleDelete = (product: IProduct) => {
     setDeletingProduct(product);
-    setDeleteType(type);
   };
 
   const confirmDelete = async () => {
     if (!deletingProduct) return;
 
     setIsDeleting(true);
-    let result;
-
+    
     try {
-      if (deleteType === "soft") {
-        result = await softDeleteProduct(deletingProduct.id);
-      } else {
-        result = await deleteProduct(deletingProduct.id);
-      }
+      const result = await deleteProduct(deletingProduct.id);
 
       if (result.success) {
         toast.success(result.message || "Product deleted successfully");
-        setDeletingProduct(null);
         handleRefresh();
       } else {
         toast.error(result.message || "Failed to delete product");
@@ -73,26 +64,9 @@ const ProductTable = ({ products, categories, brands }: ProductTableProps) => {
       toast.error(error.message || "An error occurred");
     } finally {
       setIsDeleting(false);
+      setDeletingProduct(null);
     }
   };
-
-  const getDeleteDialogConfig = () => {
-    if (!deletingProduct) return { title: "", description: "" };
-
-    if (deleteType === "soft") {
-      return {
-        title: "Archive Product",
-        description: `Are you sure you want to archive "${deletingProduct.name}"? This will hide the product from the store but keep it in the database.`,
-      };
-    } else {
-      return {
-        title: "Delete Product Permanently",
-        description: `⚠️ WARNING: Are you sure you want to permanently delete "${deletingProduct.name}"? This action cannot be undone and will remove all associated data including variants, images, and reviews.`,
-      };
-    }
-  };
-
-  const { title, description } = getDeleteDialogConfig();
 
   return (
     <>
@@ -130,7 +104,6 @@ const ProductTable = ({ products, categories, brands }: ProductTableProps) => {
             </p>
           </div>
         }
-        // className="mt-4"
       />
 
       {/* View Product Dialog */}
@@ -159,12 +132,11 @@ const ProductTable = ({ products, categories, brands }: ProductTableProps) => {
         onOpenChange={(open) => {
           if (!open) {
             setDeletingProduct(null);
-            setDeleteType("soft");
           }
         }}
         onConfirm={confirmDelete}
-        title={title}
-        description={description}
+        title="Delete Product"
+        description={`Are you sure you want to delete "${deletingProduct?.name}"? This action cannot be undone.`}
         isDeleting={isDeleting}
       />
     </>

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logs } from "lucide-react";
+import { Logs, LayoutDashboard } from "lucide-react";
 import MobileMenu from "./MobileMenu";
 import Logo from "./Logo";
 import HeaderMenu from "./HeaderMenu";
@@ -27,16 +27,30 @@ const Navbar = async () => {
           <CartIcon />
           <FavoriteButton />
 
-          {/* {user && ( */}
-          <Link
-            href={"/orders"}
-            className="group relative hover:text-shop_light_green hoverEffect"
-          >
-            <Logs />
-            <span className="absolute -top-1 -right-1 bg-shop_btn_dark_green text-white h-3.5 w-3.5 rounded-full text-xs font-semibold flex items-center justify-center">
-              {/* {orders?.length ? orders?.length : 0} */}
-            </span>
-          </Link>
+          {/* Dashboard button for logged-in users */}
+          {accessToken && (
+            <Link
+              href="/dashboard"
+              className="group relative hover:text-shop_light_green hoverEffect"
+              title="Dashboard"
+            >
+              <LayoutDashboard className="h-5 w-5" />
+            </Link>
+          )}
+
+          {/* Orders link (only for logged-in) */}
+          {accessToken && (
+            <Link
+              href={"/orders"}
+              className="group relative hover:text-shop_light_green hoverEffect"
+              title="My Orders"
+            >
+              <Logs />
+              <span className="absolute -top-1 -right-1 bg-shop_btn_dark_green text-white h-3.5 w-3.5 rounded-full text-xs font-semibold flex items-center justify-center">
+                {/* {orders?.length ? orders?.length : 0} */}
+              </span>
+            </Link>
+          )}
 
           <div className="hidden md:flex items-center space-x-2">
             {accessToken ? (

@@ -1,5 +1,5 @@
 const ChangePasswordPage = () => {
-  return <div>Change Password</div>;
+  return <div>ChangePasswordPage</div>;
 };
 
 export default ChangePasswordPage;

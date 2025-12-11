@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// hooks/useCategories.ts
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";

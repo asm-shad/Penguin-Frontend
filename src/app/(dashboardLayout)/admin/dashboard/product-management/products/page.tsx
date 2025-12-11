@@ -18,36 +18,40 @@ const ProductManagementPage = async ({
 }) => {
   const searchParamsObj = await searchParams;
   const queryString = queryStringFormatter(searchParamsObj);
-  
+
   const [productsResult, categoriesResult, brandsResult] = await Promise.all([
     getProducts(queryString),
     fetchCategories(),
     fetchAllBrands(),
   ]);
-  
+
   const totalPages = Math.ceil(
     (productsResult?.meta?.total || 1) / (productsResult?.meta?.limit || 10)
   );
-  
+
   return (
     <div className="space-y-6">
-      <ProductManagementHeader 
-        categories={categoriesResult?.data || []}
-        brands={brandsResult?.data || []}
-      />
-      
-      <ProductFilters
-        categories={categoriesResult?.data || []}
-        brands={brandsResult?.data || []}
-      />
-      
+      <Suspense fallback={<div>Loading header...</div>}>
+        <ProductManagementHeader
+          categories={categoriesResult?.data || []}
+          brands={brandsResult?.data || []}
+        />
+      </Suspense>
+
+      <Suspense fallback={<div>Loading filters...</div>}>
+        <ProductFilters
+          categories={categoriesResult?.data || []}
+          brands={brandsResult?.data || []}
+        />
+      </Suspense>
+
       <Suspense fallback={<TableSkeleton columns={10} rows={10} />}>
-        <ProductTable 
+        <ProductTable
           products={productsResult.data || []}
           categories={categoriesResult?.data || []}
           brands={brandsResult?.data || []}
         />
-        
+
         <TablePagination
           currentPage={productsResult?.meta?.page || 1}
           totalPages={totalPages || 1}

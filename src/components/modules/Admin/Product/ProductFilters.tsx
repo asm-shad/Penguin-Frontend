@@ -1,370 +1,225 @@
-// components/modules/Product/ProductFilters.tsx
 "use client";
 
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
 import { IBrand, ICategory } from "@/types/product.interface";
-import { Search, Filter, X } from "lucide-react";
+import SearchFilter from "../../Dashboard/shared/SearchFilter";
+import RefreshButton from "../../Dashboard/shared/RefreshButton";
+import ClearFiltersButton from "@/components/shared/ClearFiltersButton";
+import { useState, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useState, useTransition } from "react";
+import SelectFilter from "../../Dashboard/shared/SelectFilter";
+import { ProductStatus } from "@/types/user.interface";
+import MultiSelectFilter from "@/components/shared/MultiSelectFilter";
 
 interface ProductFiltersProps {
   categories: ICategory[];
   brands: IBrand[];
-  showFilters?: boolean;
 }
 
-const ProductFilters = ({ 
-  categories, 
-  brands, 
-  showFilters = true 
-}: ProductFiltersProps) => {
+const ProductFilters = ({ categories, brands }: ProductFiltersProps) => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [, startTransition] = useTransition();
-  const [isFiltersOpen, setIsFiltersOpen] = useState(false);
-  const [filters, setFilters] = useState({
-    searchTerm: searchParams.get("search") || "",
-    category: searchParams.get("category") || "",
-    brand: searchParams.get("brand") || "",
-    status: searchParams.get("status") || "",
-    minPrice: searchParams.get("minPrice") || "",
-    maxPrice: searchParams.get("maxPrice") || "",
-    inStock: searchParams.get("inStock") || "",
-    isFeatured: searchParams.get("isFeatured") || "",
-    sortBy: searchParams.get("sortBy") || "createdAt",
-    sortOrder: searchParams.get("sortOrder") || "desc",
-  });
+  
+  // Read directly from URL params
+  const minPrice = searchParams.get("minPrice") || "";
+  const maxPrice = searchParams.get("maxPrice") || "";
+  
+  const [localMinPrice, setLocalMinPrice] = useState(minPrice);
+  const [localMaxPrice, setLocalMaxPrice] = useState(maxPrice);
 
-  const applyFilters = () => {
+  const updatePriceFilter = useCallback((type: "min" | "max", value: string) => {
+    // const params = new URLSearchParams(searchParams.toString());
+    
+    if (type === "min") {
+      setLocalMinPrice(value);
+    } else {
+      setLocalMaxPrice(value);
+    }
+    
+    // Debounce the URL update
+    const timeoutId = setTimeout(() => {
+      const newParams = new URLSearchParams(searchParams.toString());
+      
+      if (type === "min") {
+        if (value) {
+          newParams.set("minPrice", value);
+        } else {
+          newParams.delete("minPrice");
+        }
+      } else {
+        if (value) {
+          newParams.set("maxPrice", value);
+        } else {
+          newParams.delete("maxPrice");
+        }
+      }
+      
+      // Always reset to page 1
+      newParams.set("page", "1");
+      
+      router.push(`?${newParams.toString()}`);
+    }, 500);
+    
+    return () => clearTimeout(timeoutId);
+  }, [router, searchParams]);
+
+  const handlePriceChange = useCallback((type: "min" | "max", value: string) => {
+    const numericValue = value.replace(/[^0-9.]/g, '');
+    updatePriceFilter(type, numericValue);
+  }, [updatePriceFilter]);
+
+  const clearPriceFilter = useCallback((type: "min" | "max") => {
     const params = new URLSearchParams(searchParams.toString());
     
-    // Remove page when filters change
-    params.delete("page");
+    if (type === "min") {
+      params.delete("minPrice");
+      setLocalMinPrice("");
+    } else {
+      params.delete("maxPrice");
+      setLocalMaxPrice("");
+    }
     
-    // Apply filters
-    Object.entries(filters).forEach(([key, value]) => {
-      if (value) {
-        params.set(key, value);
-      } else {
-        params.delete(key);
-      }
-    });
-    
-    startTransition(() => {
-      router.push(`?${params.toString()}`);
-    });
-  };
-
-  const clearFilters = () => {
-    setFilters({
-      searchTerm: "",
-      category: "",
-      brand: "",
-      status: "",
-      minPrice: "",
-      maxPrice: "",
-      inStock: "",
-      isFeatured: "",
-      sortBy: "createdAt",
-      sortOrder: "desc",
-    });
-    
-    const params = new URLSearchParams();
-    params.set("sortBy", "createdAt");
-    params.set("sortOrder", "desc");
-    
-    startTransition(() => {
-      router.push(`?${params.toString()}`);
-    });
-  };
-
-  const handleFilterChange = (key: keyof typeof filters, value: string) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
-  };
-
-  const hasActiveFilters = Object.entries(filters).some(
-    ([key, value]) => 
-      value && 
-      !["sortBy", "sortOrder"].includes(key) && 
-      (key !== "searchTerm" || value.trim() !== "")
-  );
+    params.set("page", "1");
+    router.push(`?${params.toString()}`);
+  }, [router, searchParams]);
 
   return (
     <div className="space-y-4">
-      {/* Search Bar */}
-      <div className="flex gap-2">
-        <div className="flex-1 relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-          <Input
-            placeholder="Search products by name, description, or SKU..."
-            value={filters.searchTerm}
-            onChange={(e) => handleFilterChange("searchTerm", e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && applyFilters()}
-            className="pl-10"
-          />
-        </div>
-        <Button onClick={applyFilters}>Search</Button>
-        {showFilters && (
-          <Button
-            variant="outline"
-            onClick={() => setIsFiltersOpen(!isFiltersOpen)}
-          >
-            <Filter className="h-4 w-4 mr-2" />
-            Filters
-            {hasActiveFilters && (
-              <span className="ml-2 bg-primary text-primary-foreground rounded-full w-5 h-5 text-xs flex items-center justify-center">
-                !
-              </span>
-            )}
-          </Button>
-        )}
+      {/* Row 1: Search and Refresh */}
+      <div className="flex items-center gap-3">
+        <SearchFilter paramName="searchTerm" placeholder="Search products..." />
+        <RefreshButton />
       </div>
 
-      {/* Filters Panel */}
-      {isFiltersOpen && showFilters && (
-        <div className="bg-muted p-6 rounded-lg space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-semibold">Advanced Filters</h3>
-            {hasActiveFilters && (
-              <Button variant="ghost" size="sm" onClick={clearFilters}>
-                <X className="h-4 w-4 mr-1" />
-                Clear All
-              </Button>
+      {/* Row 2: Filter Controls */}
+      <div className="flex items-center gap-3 flex-wrap">
+        {/* Category Multi-Select */}
+        <MultiSelectFilter
+          paramName="categoryId"
+          options={categories.map((category) => ({
+            value: category.id,
+            label: category.name,
+          }))}
+          placeholder="Select categories"
+          searchPlaceholder="Search categories..."
+          emptyMessage="No categories found."
+          showBadges={false}
+        />
+
+        {/* Brand Multi-Select */}
+        <MultiSelectFilter
+          paramName="brandId"
+          options={brands.map((brand) => ({
+            value: brand.id,
+            label: brand.name,
+          }))}
+          placeholder="Select brands"
+          searchPlaceholder="Search brands..."
+          emptyMessage="No brands found."
+          showBadges={false}
+        />
+
+        {/* Price Range */}
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={localMinPrice}
+              onChange={(e) => handlePriceChange("min", e.target.value)}
+              placeholder="Min price"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-32"
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              $
+            </span>
+          </div>
+          <span className="text-gray-400">-</span>
+          <div className="relative">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={localMaxPrice}
+              onChange={(e) => handlePriceChange("max", e.target.value)}
+              placeholder="Max price"
+              className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent w-32"
+            />
+            <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400">
+              $
+            </span>
+          </div>
+        </div>
+
+        {/* Product Status Filter - FIXED: Use "all" instead of empty string */}
+        <SelectFilter
+          paramName="status"
+          placeholder="Product Status"
+          // defaultValue="All Status"
+          options={[
+            // { label: "All Status", value: "all" },
+            { label: "New", value: ProductStatus.NEW },
+            { label: "Hot", value: ProductStatus.HOT },
+            { label: "Sale", value: ProductStatus.SALE },
+            { label: "Out of Stock", value: ProductStatus.OUT_OF_STOCK },
+            { label: "Discontinued", value: ProductStatus.DISCONTINUED },
+          ]}
+        />
+
+        {/* Clear All Filters */}
+        <ClearFiltersButton preserveParams={["page", "limit"]} />
+      </div>
+
+      {/* Row 3: Active Filter Badges */}
+      <div className="flex flex-wrap gap-2 min-h-10">
+        <MultiSelectFilter
+          paramName="categoryId"
+          options={categories.map((category) => ({
+            value: category.id,
+            label: category.name,
+          }))}
+          placeholder=""
+          badgesOnly={true}
+        />
+
+        <MultiSelectFilter
+          paramName="brandId"
+          options={brands.map((brand) => ({
+            value: brand.id,
+            label: brand.name,
+          }))}
+          placeholder=""
+          badgesOnly={true}
+        />
+
+        {/* Price Badges */}
+        {(minPrice || maxPrice) && (
+          <div className="flex flex-wrap gap-2">
+            {minPrice && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                Min: ${minPrice}
+                <button
+                  onClick={() => clearPriceFilter("min")}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                  type="button"
+                >
+                  ×
+                </button>
+              </span>
+            )}
+            {maxPrice && (
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                Max: ${maxPrice}
+                <button
+                  onClick={() => clearPriceFilter("max")}
+                  className="ml-2 text-blue-600 hover:text-blue-800"
+                  type="button"
+                >
+                  ×
+                </button>
+              </span>
             )}
           </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {/* Category Filter */}
-            <Field>
-              <FieldLabel htmlFor="category">Category</FieldLabel>
-              <Select
-                value={filters.category}
-                onValueChange={(value) => handleFilterChange("category", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Categories</SelectItem>
-                  {categories.map((category) => (
-                    <SelectItem key={category.id} value={category.id}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Brand Filter */}
-            <Field>
-              <FieldLabel htmlFor="brand">Brand</FieldLabel>
-              <Select
-                value={filters.brand}
-                onValueChange={(value) => handleFilterChange("brand", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Brands" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Brands</SelectItem>
-                  {brands.map((brand) => (
-                    <SelectItem key={brand.id} value={brand.id}>
-                      {brand.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Status Filter */}
-            <Field>
-              <FieldLabel htmlFor="status">Status</FieldLabel>
-              <Select
-                value={filters.status}
-                onValueChange={(value) => handleFilterChange("status", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Statuses" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Statuses</SelectItem>
-                  <SelectItem value="ACTIVE">Active</SelectItem>
-                  <SelectItem value="INACTIVE">Inactive</SelectItem>
-                  <SelectItem value="NEW">New Arrival</SelectItem>
-                  <SelectItem value="HOT">Hot</SelectItem>
-                  <SelectItem value="SALE">On Sale</SelectItem>
-                  <SelectItem value="OUT_OF_STOCK">Out of Stock</SelectItem>
-                  <SelectItem value="DISCONTINUED">Discontinued</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Price Range */}
-            <Field>
-              <FieldLabel htmlFor="minPrice">Min Price ($)</FieldLabel>
-              <Input
-                id="minPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="0.00"
-                value={filters.minPrice}
-                onChange={(e) => handleFilterChange("minPrice", e.target.value)}
-              />
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="maxPrice">Max Price ($)</FieldLabel>
-              <Input
-                id="maxPrice"
-                type="number"
-                min="0"
-                step="0.01"
-                placeholder="1000.00"
-                value={filters.maxPrice}
-                onChange={(e) => handleFilterChange("maxPrice", e.target.value)}
-              />
-            </Field>
-
-            {/* Stock Status */}
-            <Field>
-              <FieldLabel htmlFor="inStock">Stock Status</FieldLabel>
-              <Select
-                value={filters.inStock}
-                onValueChange={(value) => handleFilterChange("inStock", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Any Stock" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">Any Stock</SelectItem>
-                  <SelectItem value="in_stock">In Stock</SelectItem>
-                  <SelectItem value="low_stock">Low Stock (&lt; 10)</SelectItem>
-                  <SelectItem value="out_of_stock">Out of Stock</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Featured Filter */}
-            <Field>
-              <FieldLabel htmlFor="isFeatured">Featured</FieldLabel>
-              <Select
-                value={filters.isFeatured}
-                onValueChange={(value) => handleFilterChange("isFeatured", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Products" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="">All Products</SelectItem>
-                  <SelectItem value="true">Featured Only</SelectItem>
-                  <SelectItem value="false">Not Featured</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            {/* Sort Options */}
-            <Field>
-              <FieldLabel htmlFor="sortBy">Sort By</FieldLabel>
-              <Select
-                value={filters.sortBy}
-                onValueChange={(value) => handleFilterChange("sortBy", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="createdAt">Date Created</SelectItem>
-                  <SelectItem value="updatedAt">Last Updated</SelectItem>
-                  <SelectItem value="name">Name</SelectItem>
-                  <SelectItem value="price">Price</SelectItem>
-                  <SelectItem value="stock">Stock</SelectItem>
-                  <SelectItem value="sku">SKU</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-
-            <Field>
-              <FieldLabel htmlFor="sortOrder">Sort Order</FieldLabel>
-              <Select
-                value={filters.sortOrder}
-                onValueChange={(value) => handleFilterChange("sortOrder", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Sort order" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="desc">Descending</SelectItem>
-                  <SelectItem value="asc">Ascending</SelectItem>
-                </SelectContent>
-              </Select>
-            </Field>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-4">
-            <Button variant="outline" onClick={() => setIsFiltersOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={applyFilters}>Apply Filters</Button>
-          </div>
-        </div>
-      )}
-
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex flex-wrap gap-2">
-          {filters.searchTerm && (
-            <Badge variant="secondary" className="px-3 py-1">
-              Search: {filters.searchTerm}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => handleFilterChange("searchTerm", "")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          {filters.category && (
-            <Badge variant="secondary" className="px-3 py-1">
-              Category: {categories.find(c => c.id === filters.category)?.name || filters.category}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => handleFilterChange("category", "")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          {filters.brand && (
-            <Badge variant="secondary" className="px-3 py-1">
-              Brand: {brands.find(b => b.id === filters.brand)?.name || filters.brand}
-              <Button
-                variant="ghost"
-                size="sm"
-                className="ml-2 h-4 w-4 p-0 hover:bg-transparent"
-                onClick={() => handleFilterChange("brand", "")}
-              >
-                <X className="h-3 w-3" />
-              </Button>
-            </Badge>
-          )}
-          {/* Add more active filter badges as needed */}
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

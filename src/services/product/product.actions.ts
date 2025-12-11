@@ -3,6 +3,7 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 import { zodValidator } from "@/lib/zodValidator";
+import { IProduct, IProductFilters } from "@/types/product.interface";
 import { ProductStatusType } from "@/types/user.interface";
 import { 
   CreateProductInput,
@@ -16,6 +17,7 @@ import {
   createProductValidationSchema,
   updateProductValidationSchema,
 } from "@/zod/product.validation";
+import { cache } from "react";
 
 
 export async function createProduct(_prevState: any, formData: FormData) {
@@ -115,6 +117,12 @@ export async function updateProduct(
   _prevState: any,
   formData: FormData
 ) {
+  console.log("🔄 [DEBUG] Update product called for ID:", productId);
+  console.log("📋 [DEBUG] FormData entries:");
+  for (const [key, value] of formData.entries()) {
+    console.log(`  ${key}:`, value);
+  }
+
   // 1️⃣ Parse arrays from FormData
   let categoryIds: string[] | undefined;
   const categoryIdsRaw = formData.get("categoryIds") as string;
@@ -122,7 +130,9 @@ export async function updateProduct(
     try {
       const parsed = JSON.parse(categoryIdsRaw);
       if (Array.isArray(parsed)) categoryIds = parsed;
-    } catch {
+      console.log("📦 [DEBUG] Parsed categoryIds:", categoryIds);
+    } catch (error) {
+      console.error("❌ [DEBUG] Failed to parse categoryIds:", error);
       categoryIds = undefined;
     }
   }
@@ -133,7 +143,9 @@ export async function updateProduct(
     try {
       const parsed = JSON.parse(variantsRaw);
       if (Array.isArray(parsed)) variants = parsed;
-    } catch {
+      console.log("📦 [DEBUG] Parsed variants:", variants);
+    } catch (error) {
+      console.error("❌ [DEBUG] Failed to parse variants:", error);
       variants = undefined;
     }
   }
@@ -146,7 +158,6 @@ export async function updateProduct(
   const stockStr = formData.get("stock") as string;
   const status = (formData.get("status") as ProductStatusType) || undefined;
   const isFeaturedRaw = formData.get("isFeatured");
-  const isActiveRaw = formData.get("isActive");
   const sku = (formData.get("sku") as string) || undefined;
   const brandId = (formData.get("brandId") as string) || undefined;
 
@@ -154,7 +165,20 @@ export async function updateProduct(
   const discount = discountStr ? parseFloat(discountStr) : undefined;
   const stock = stockStr ? parseInt(stockStr) : undefined;
   const isFeatured = isFeaturedRaw !== null ? isFeaturedRaw === "true" : undefined;
-  const isActive = isActiveRaw !== null ? isActiveRaw === "true" : undefined;
+  
+  // Set default value for isActive (true by default)
+  const isActive = true;
+
+  console.log("📝 [DEBUG] Extracted form values:");
+  console.log("  name:", name);
+  console.log("  price:", price);
+  console.log("  discount:", discount);
+  console.log("  stock:", stock);
+  console.log("  status:", status);
+  console.log("  isFeatured:", isFeatured);
+  console.log("  isActive (default):", isActive);
+  console.log("  sku:", sku);
+  console.log("  brandId:", brandId);
 
   // 3️⃣ Build validation payload
   const validationPayload: UpdateProductInput = {
@@ -164,7 +188,7 @@ export async function updateProduct(
     discount,
     status,
     isFeatured,
-    isActive,
+    isActive, // Now always has a value
     sku,
     stock,
     brandId,
@@ -172,9 +196,12 @@ export async function updateProduct(
     variants,
   };
 
+  console.log("✅ [DEBUG] Validation payload:", validationPayload);
+
   // 4️⃣ Validate with Zod
   const validatedPayload = zodValidator(validationPayload, updateProductValidationSchema);
   if (!validatedPayload.success || !validatedPayload.data) {
+    console.error("❌ [DEBUG] Zod validation failed:", validatedPayload.errors);
     return {
       success: false,
       message: "Validation failed",
@@ -183,27 +210,56 @@ export async function updateProduct(
     };
   }
 
+  console.log("✅ [DEBUG] Zod validation passed:", validatedPayload.data);
+
   // 5️⃣ Prepare FormData for backend
   const newFormData = new FormData();
-  newFormData.append("data", JSON.stringify(validatedPayload.data));
+  const dataString = JSON.stringify(validatedPayload.data);
+  newFormData.append("data", dataString);
+  console.log("📤 [DEBUG] Appending data to FormData:", dataString);
 
   // Append new files if any
   const files = formData.getAll("files") as File[];
-  files.forEach((file) => {
+  console.log("📎 [DEBUG] Number of files:", files.length);
+  files.forEach((file, index) => {
     if (file && file.size > 0) {
       newFormData.append("files", file);
+      console.log(`  File ${index + 1}: ${file.name} (${file.size} bytes)`);
     }
   });
 
   // 6️⃣ Send update request
   try {
+    console.log("🚀 [DEBUG] Sending PUT request to:", `/product/${productId}`);
+    console.log("📦 [DEBUG] Request FormData entries:");
+    for (const [key, value] of newFormData.entries()) {
+      if (key === "data") {
+        console.log(`  ${key}:`, value);
+      } else {
+        console.log(`  ${key}:`, value instanceof File ? `${value.name} (${value.size} bytes)` : value);
+      }
+    }
+
     const response = await serverFetch.put(`/product/${productId}`, {
       body: newFormData,
     });
+    
+    console.log("📨 [DEBUG] Response status:", response.status);
+    console.log("📨 [DEBUG] Response OK:", response.ok);
+    
     const result = await response.json();
+    console.log("✅ [DEBUG] Response result:", result);
+    
+    if (!response.ok) {
+      console.error("❌ [DEBUG] API returned error:", result);
+    }
+    
     return result;
   } catch (error: any) {
-    console.error("Update product error:", error);
+    console.error("❌ [DEBUG] Update product error:", error);
+    console.error("❌ [DEBUG] Error message:", error.message);
+    console.error("❌ [DEBUG] Error stack:", error.stack);
+    
     return {
       success: false,
       message: process.env.NODE_ENV === "development" ? error.message : "Failed to update product",
@@ -213,36 +269,8 @@ export async function updateProduct(
 }
 
 // Get Products with filters
-export async function getProducts(_prevState: any, formData?: FormData) {
+export async function getProducts(queryString?: string) {
   try {
-    // Build query string from form data or use empty
-    const queryParams = new URLSearchParams();
-    
-    if (formData) {
-      const searchTerm = formData.get("searchTerm") as string;
-      const category = formData.get("category") as string;
-      const brand = formData.get("brand") as string;
-      const status = formData.get("status") as string;
-      const isFeatured = formData.get("isFeatured") as string;
-      const isActive = formData.get("isActive") as string;
-      const page = formData.get("page") as string;
-      const limit = formData.get("limit") as string;
-      const sortBy = formData.get("sortBy") as string;
-      const sortOrder = formData.get("sortOrder") as string;
-      
-      if (searchTerm) queryParams.append("searchTerm", searchTerm);
-      if (category) queryParams.append("categoryId", category);
-      if (brand) queryParams.append("brandId", brand);
-      if (status) queryParams.append("status", status);
-      if (isFeatured) queryParams.append("isFeatured", isFeatured);
-      if (isActive) queryParams.append("isActive", isActive);
-      if (page) queryParams.append("page", page);
-      if (limit) queryParams.append("limit", limit);
-      if (sortBy) queryParams.append("sortBy", sortBy);
-      if (sortOrder) queryParams.append("sortOrder", sortOrder);
-    }
-
-    const queryString = queryParams.toString();
     const response = await serverFetch.get(`/product${queryString ? `?${queryString}` : ""}`);
     const result = await response.json();
     return result;
@@ -427,20 +455,6 @@ export async function updateProductStock(id: string, _prevState: any, formData: 
   }
 }
 
-// Soft Delete Product
-export async function softDeleteProduct(id: string) {
-  try {
-    const response = await serverFetch.delete(`/product/soft/${id}`);
-    const result = await response.json();
-    return result;
-  } catch (error: any) {
-    console.error("Soft delete product error:", error);
-    return {
-      success: false,
-      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to soft delete product"}`,
-    };
-  }
-}
 
 // Delete Product
 export async function deleteProduct(id: string) {
@@ -532,3 +546,130 @@ export async function getProductsByCategorySlug(categorySlug: string, _prevState
     };
   }
 }
+
+export async function fetchNewArrivals(limit?: number) {
+  return await getProductsByStatus("NEW", { limit });
+}
+
+export async function fetchHotProducts(limit?: number) {
+  return await getProductsByStatus("HOT", { limit });
+}
+
+export async function fetchProductsOnSale(limit?: number) {
+  return await getProductsByStatus("SALE", { limit });
+}
+
+export const fetchProducts = cache(async (filters?: IProductFilters) => {
+  try {
+    // Build query string from filters
+    const queryParams = new URLSearchParams();
+
+    if (filters?.searchTerm)
+      queryParams.append("searchTerm", filters.searchTerm);
+    if (filters?.category) queryParams.append("categoryId", filters.category);
+    if (filters?.brand) queryParams.append("brandId", filters.brand);
+    if (filters?.minPrice)
+      queryParams.append("minPrice", filters.minPrice.toString());
+    if (filters?.maxPrice)
+      queryParams.append("maxPrice", filters.maxPrice.toString());
+    if (filters?.status) queryParams.append("status", filters.status);
+    if (filters?.isFeatured !== undefined)
+      queryParams.append("isFeatured", filters.isFeatured.toString());
+    if (filters?.isActive !== undefined)
+      queryParams.append("isActive", filters.isActive.toString());
+    if (filters?.sortBy) queryParams.append("sortBy", filters.sortBy);
+    if (filters?.sortOrder) queryParams.append("sortOrder", filters.sortOrder);
+    if (filters?.page) queryParams.append("page", filters.page.toString());
+    if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+
+    const queryString = queryParams.toString();
+    const endpoint = queryString ? `/product?${queryString}` : "/product";
+
+    const res = await serverFetch.get(endpoint);
+
+    if (!res.ok) {
+      throw new Error(`Failed to fetch products: ${res.statusText}`);
+    }
+
+    const result = await res.json();
+
+    if (!result.success) {
+      throw new Error(result.message || "Failed to fetch products");
+    }
+
+    return {
+      success: true,
+      data: result.data as IProduct[],
+      meta: result.meta,
+    };
+  } catch (error: any) {
+    console.error("Error fetching products:", error);
+    return {
+      success: false,
+      message: error.message || "Failed to fetch products",
+      data: [],
+      meta: undefined,
+    };
+  }
+});
+
+export const fetchProductsByCategorySlug = 
+  async (categorySlug: string, filters?: Omit<IProductFilters, "category">) => {
+    try {
+      // Build query string from filters
+      const queryParams = new URLSearchParams();
+
+      if (filters?.searchTerm)
+        queryParams.append("searchTerm", filters.searchTerm);
+      if (filters?.brand) queryParams.append("brandId", filters.brand);
+      if (filters?.minPrice)
+        queryParams.append("minPrice", filters.minPrice.toString());
+      if (filters?.maxPrice)
+        queryParams.append("maxPrice", filters.maxPrice.toString());
+      if (filters?.status) queryParams.append("status", filters.status);
+      if (filters?.isFeatured !== undefined)
+        queryParams.append("isFeatured", filters.isFeatured.toString());
+      if (filters?.isActive !== undefined)
+        queryParams.append("isActive", filters.isActive.toString());
+      if (filters?.sortBy) queryParams.append("sortBy", filters.sortBy);
+      if (filters?.sortOrder)
+        queryParams.append("sortOrder", filters.sortOrder);
+      if (filters?.page) queryParams.append("page", filters.page.toString());
+      if (filters?.limit) queryParams.append("limit", filters.limit.toString());
+
+      const queryString = queryParams.toString();
+      const endpoint = queryString
+        ? `/product/category/${categorySlug}?${queryString}`
+        : `/product/category/${categorySlug}`;
+
+      const res = await serverFetch.get(endpoint);
+
+      if (!res.ok) {
+        throw new Error(
+          `Failed to fetch products by category: ${res.statusText}`
+        );
+      }
+
+      const result = await res.json();
+
+      if (!result.success) {
+        throw new Error(
+          result.message || "Failed to fetch products by category"
+        );
+      }
+
+      return {
+        success: true,
+        data: result.data as IProduct[],
+        meta: result.meta,
+      };
+    } catch (error: any) {
+      console.error("Error fetching products by category:", error);
+      return {
+        success: false,
+        message: error.message || "Failed to fetch products by category",
+        data: [],
+        meta: undefined,
+      };
+    }
+  }
