@@ -121,7 +121,7 @@ export const getDefaultDashboardRoute = (role: UserRole): string => {
     case "SUPER_ADMIN":
       return "/super-admin/dashboard";
     case "ADMIN":
-      return "/admin/dashboard";
+      return "/admin/dashboard/product-management";
     case "PRODUCT_MANAGER":
       return "/product-manager/dashboard";
     case "CUSTOMER_SUPPORT":

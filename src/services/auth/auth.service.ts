@@ -15,6 +15,7 @@ import {
   UserRole,
 } from "@/lib/auth-utils";
 
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export async function updateMyProfile(formData: FormData) {
   try {
@@ -250,6 +251,109 @@ export async function getNewAccessToken() {
       tokenRefreshed: false,
       success: false,
       message: error?.message || "Something went wrong",
+    };
+  }
+}
+
+export async function changePassword(
+  _prevState: any,
+  formData: FormData
+) {
+  try {
+    // Extract form data
+    const oldPassword = formData.get("oldPassword") as string;
+    const newPassword = formData.get("newPassword") as string;
+    const confirmPassword = formData.get("confirmPassword") as string;
+
+    // Basic validation
+    if (!oldPassword || !newPassword || !confirmPassword) {
+      return {
+        success: false,
+        message: "All fields are required",
+        errors: {
+          oldPassword: oldPassword ? [] : ["Current password is required"],
+          newPassword: newPassword ? [] : ["New password is required"],
+          confirmPassword: confirmPassword ? [] : ["Confirm password is required"],
+        },
+      };
+    }
+
+    if (newPassword !== confirmPassword) {
+      return {
+        success: false,
+        message: "Passwords do not match",
+        errors: {
+          confirmPassword: ["Passwords do not match"],
+        },
+      };
+    }
+
+    if (newPassword.length < 8) {
+      return {
+        success: false,
+        message: "Password must be at least 8 characters",
+        errors: {
+          newPassword: ["Password must be at least 8 characters"],
+        },
+      };
+    }
+
+    if (oldPassword === newPassword) {
+      return {
+        success: false,
+        message: "New password must be different from current password",
+        errors: {
+          newPassword: ["New password must be different from current password"],
+        },
+      };
+    }
+
+    // Get the access token
+    const accessToken = await getCookie("accessToken");
+
+    if (!accessToken) {
+      return {
+        success: false,
+        message: "User not authenticated",
+      };
+    }
+
+    // Prepare the request body
+    const requestBody = {
+      oldPassword,
+      newPassword,
+    };
+
+    // Make the API call
+    const response = await serverFetch.post("/auth/change-password", {
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify(requestBody),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      return {
+        success: false,
+        message: result.message || "Failed to change password",
+      };
+    }
+
+    // Revalidate user info cache
+    revalidateTag("user-info", "max");
+
+    return {
+      success: true,
+      message: result.message || "Password changed successfully!",
+    };
+  } catch (error: any) {
+    console.error("Change password error:", error);
+    return {
+      success: false,
+      message: error.message || "An error occurred while changing password",
     };
   }
 }

@@ -44,3 +44,23 @@ export function formatShortDate(date: string | Date): string {
     day: "numeric",
   });
 }
+
+// Add this to your existing /lib/formatters.ts file
+export function formatCurrency(
+  amount: number,
+  currencyCode: string,
+  locale: string = 'en-US'
+): string {
+  try {
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: currencyCode,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount);
+  } catch (error) {
+    // Fallback in case of an invalid currency code or locale
+    console.error('Currency formatting error:', error);
+    return `${currencyCode} ${amount.toFixed(2)}`;
+  }
+}

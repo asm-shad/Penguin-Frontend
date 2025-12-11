@@ -168,3 +168,14 @@ export interface IUpdateProfile {
   gender?: "MALE" | "FEMALE" | "OTHER";
   profilePhoto?: File;
 }
+
+export interface ChangePasswordInput {
+  oldPassword: string;
+  newPassword: string;
+  confirmPassword: string;
+}
+
+export interface ValidationError {
+  path: (string | number)[];
+  message: string;
+}

@@ -2,8 +2,10 @@
 "use server";
 
 import { serverFetch } from "@/lib/server-fetch";
+import { zodValidator } from "@/lib/zodValidator";
 import { IOrder } from "@/types/order.interface";
 import { CreateOrderDto, IOrderFilters, IUpdateOrderStatusDto } from "@/types/orderPayment";
+import { updateOrderStatusZodSchema } from "@/zod/order.validation";
 import { cookies } from "next/headers";
 
 import { cache } from "react";
@@ -125,6 +127,20 @@ export const fetchAllOrders = cache(async (filters?: IOrderFilters) => {
   }
 });
 
+export async function fetchOrders(queryString?: string) {
+  try {
+    const response = await serverFetch.get(`/orders${queryString ? `?${queryString}` : ""}`);
+    const result = await response.json();
+    return result;
+  } catch (error: any) {
+    console.error("Get orders error:", error);
+    return {
+      success: false,
+      message: `${process.env.NODE_ENV === "development" ? error.message : "Failed to fetch orders"}`,
+    };
+  }
+}
+
 // Get my orders (authenticated user)
 export async function getMyOrders(filters?: any) {
   try {
@@ -233,41 +249,66 @@ export const fetchOrderByNumber = cache(async (orderNumber: string) => {
 });
 
 // Update order status
-export const updateOrderStatus = async (
-  id: string,
-  statusData: IUpdateOrderStatusDto
-) => {
-  try {
-    const res = await serverFetch.patch(`/orders/${id}/status`, {
-      body: JSON.stringify(statusData),
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
+export async function updateOrderStatus(
+  id: string, 
+  _prevState: any, 
+  formData: FormData
+) {
+  // Extract form data
+  const status = formData.get("status") as string;
+  const notes = formData.get("notes") as string;
 
-    if (!res.ok) {
-      throw new Error(`Failed to update order status: ${res.statusText}`);
-    }
+  // Build validation payload
+  const validationPayload: Partial<IUpdateOrderStatusDto> = {
+    status: status as any, // This will be validated by Zod
+    notes: notes || undefined,
+  };
 
-    const result = await res.json();
+  // Validate with Zod
+  const validatedPayload = zodValidator(
+    validationPayload, 
+    updateOrderStatusZodSchema
+  );
 
-    if (!result.success) {
-      throw new Error(result.message || "Failed to update order status");
-    }
-
+  if (!validatedPayload.success && validatedPayload.errors) {
     return {
-      success: true,
-      data: result.data as IOrder,
+      success: false,
+      message: "Validation failed",
+      formData: validationPayload,
+      errors: validatedPayload.errors,
     };
+  }
+
+  if (!validatedPayload.data) {
+    return {
+      success: false,
+      message: "Validation failed",
+      formData: validationPayload,
+    };
+  }
+
+  try {
+    // Make API call
+    const response = await serverFetch.patch(`/orders/${id}/status`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(validatedPayload.data),
+    });
+    
+    const result = await response.json();
+    
+    // Return the API response directly (should have success, message, data)
+    return result;
   } catch (error: any) {
     console.error("Error updating order status:", error);
     return {
       success: false,
-      message: error.message || "Failed to update order status",
-      data: null,
+      message: `${process.env.NODE_ENV === 'development' ? error.message : 'Something went wrong'}`,
+      formData: validationPayload,
     };
   }
-};
+}
 
 // Cancel order
 export const cancelOrder = async (id: string) => {

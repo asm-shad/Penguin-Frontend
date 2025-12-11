@@ -5,7 +5,7 @@ import {
   IProduct,
   IProductFilters,
 } from "@/types/product.interface";
-import React, { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { Loader2 } from "lucide-react";
 import { Title } from "@/components/ui/text";

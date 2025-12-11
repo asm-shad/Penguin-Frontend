@@ -127,18 +127,6 @@ const SuccessPageContent = () => {
             </Link>
           </p>
         </div>
-        
-        {/* Debug info (only in development) */}
-        {process.env.NODE_ENV === 'development' && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left">
-            <h4 className="text-sm font-mono text-gray-600 mb-2">Debug Info:</h4>
-            <p className="text-xs font-mono break-all">
-              Session ID: {sessionId || "None"}<br/>
-              Order ID: {orderId || "None"}<br/>
-              Timestamp: {new Date().toLocaleTimeString()}
-            </p>
-          </div>
-        )}
       </motion.div>
     </div>
   );

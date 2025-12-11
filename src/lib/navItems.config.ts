@@ -366,7 +366,7 @@ export const orderManagementNavItems: NavSection[] = [
     items: [
       {
         title: "All Orders",
-        href: "/admin/orders",
+        href: "/admin/dashboard/order-management",
         icon: "ShoppingCart",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },

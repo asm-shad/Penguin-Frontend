@@ -34,7 +34,7 @@ const HomeTabbar = ({ selectedTab, onTabSelect, categories }: Props) => {
         </div>
       </div>
       <Link
-        href={"/sale"} // Changed from "/shop" to "/sale" as requested
+        href={"/shop"} // Changed from "/shop" to "/sale" as requested
         className="border border-darkColor px-4 py-1 rounded-full hover:bg-shop_light_green hover:text-white hover:border-shop_light_green hoverEffect"
       >
         See all
