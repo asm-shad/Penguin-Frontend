@@ -1,36 +1,58 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# GenZMart – E-commerce Frontend
 
-## Getting Started
+**Live Project:** [https://gen-z-mart-frontend.vercel.app/](https://gen-z-mart-frontend.vercel.app/)
 
-First, run the development server:
+---
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## Project Overview
+GenZMart is a modern, full-featured **e-commerce frontend** built with **Next.js**, **React.js**, and **TypeScript**.  
+It offers a smooth, interactive, and responsive shopping experience, leveraging **Tailwind CSS** for styling, **Radix UI** for accessible components, and **Framer Motion** for animations.  
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+The project is designed to be scalable and maintainable, supporting a wide range of e-commerce functionalities.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Key Features Implemented
 
-## Learn More
+- **Products & Orders:** Browse products, add to cart, and manage orders.  
+- **Role-Based Access:** Supports multiple user roles such as **Product Manager**, **Customer Support**, and **Admin** with distinct permissions.  
+- **Stripe Payment Integration:** Secure and seamless checkout using **Stripe.js**.  
+- **Blog & Content Section:** Share updates, promotions, and news.  
+- **Interactive UI:** Draggable components, smooth animations, and responsive design with **Framer Motion** and **Embla Carousel**.  
+- **State Management:** Efficient frontend state management using **Zustand**.  
+- **Notifications:** Real-time feedback using **React Hot Toast**.  
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Planned Features (Future Integration)
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Product **variants** and **reviews**  
+- **Coupon system** for discounts  
+- **Inventory management**  
+- **Advanced customer support** features  
+- **Delivery & Shipping System:** Track orders, estimated delivery times, shipping costs  
+- **Order Status Updates:** Real-time notifications for shipment, dispatch, and delivery  
+- **Enhanced Checkout:** Support multiple addresses, payment methods, and order history
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Tech Stack
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**Frontend:** Next.js 16, React 19, TypeScript, Tailwind CSS  
+**UI Components:** Radix UI, Lucide React, Embla Carousel  
+**State Management:** Zustand  
+**Payment Integration:** Stripe  
+**Utilities:** Day.js, Date-fns, Slugify, Zod, Class Variance Authority  
+**Animations:** Framer Motion  
+**Development Tools:** ESLint, Babel, PostCSS, Tailwind Merge, Tw-animate-css  
+
+---
+
+## Project Preview
+
+![GenZMart Preview](https://i.ibb.co.com/LX4RM9f3/gen-Z.png)
+
+---
+
+## Notes
+GenZMart is under active development. Future updates will include a fully integrated delivery system, shipping management, advanced inventory features, and an enhanced customer experience.  
