@@ -7,6 +7,8 @@ import { queryStringFormatter } from "@/lib/formatters";
 import { getUsers } from "@/services/superAdmin/user.actions";
 import { Suspense } from "react";
 
+export const dynamic = 'force-dynamic';
+
 const AdminManagementPage = async ({
   searchParams,
 }: {

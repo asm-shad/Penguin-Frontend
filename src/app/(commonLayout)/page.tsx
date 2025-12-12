@@ -6,6 +6,8 @@ import ProductGrid from "@/components/modules/Product/ProductGrid";
 import Container from "@/components/shared/Container";
 import { fetchFeaturedCategories } from "@/services/product/category.actions";
 
+export const dynamic = 'force-static';
+
 const Home = async () => {
   const categoriesResult = await fetchFeaturedCategories(6); // Get 6 featured categories
 

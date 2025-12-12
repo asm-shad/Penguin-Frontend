@@ -1,4 +1,4 @@
-// app/(dashboard)/change-password/page.tsx
+export const dynamic = "force-dynamic";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import ChangePasswordPage from "@/components/modules/MyProfile/ChangePasswordPage";

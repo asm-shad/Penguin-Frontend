@@ -7,6 +7,10 @@ import { TableSkeleton } from "@/components/modules/Dashboard/shared/TableSkelet
 import { fetchCoupons } from "@/services/admin/couponManagement.actions";
 import { Suspense } from "react";
 
+// This directive tells Next.js to render this page on each request
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 const CouponManagementPage = async ({
   searchParams,
 }: {

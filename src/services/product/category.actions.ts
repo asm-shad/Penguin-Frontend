@@ -3,10 +3,9 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 import { ICategory } from "@/types/product.interface";
-import { cache } from "react";
 
 // Server-side function to fetch all categories with filtering and pagination
-export const fetchCategories = cache(
+export const fetchCategories =
   async (options?: {
     searchTerm?: string;
     isFeatured?: boolean;
@@ -60,10 +59,9 @@ export const fetchCategories = cache(
       };
     }
   }
-);
 
 // Server-side function to fetch featured categories WITH product counts
-export const fetchFeaturedCategories = cache(async (limit?: number) => {
+export const fetchFeaturedCategories = async (limit?: number) => {
   try {
     const queryParams = new URLSearchParams();
     if (limit) queryParams.append("limit", limit.toString());
@@ -97,10 +95,10 @@ export const fetchFeaturedCategories = cache(async (limit?: number) => {
       data: [],
     };
   }
-});
+}
 
 // Server-side function to fetch category by slug
-export const fetchCategoryBySlug = cache(async (slug: string) => {
+export const fetchCategoryBySlug = async (slug: string) => {
   try {
     const res = await serverFetch.get(`/category/slug/${slug}`);
 
@@ -126,10 +124,10 @@ export const fetchCategoryBySlug = cache(async (slug: string) => {
       data: null,
     };
   }
-});
+}
 
 // Server-side function to fetch category by ID
-export const fetchCategoryById = cache(async (id: string) => {
+export const fetchCategoryById = async (id: string) => {
   try {
     const res = await serverFetch.get(`/category/${id}`);
 
@@ -155,5 +153,5 @@ export const fetchCategoryById = cache(async (id: string) => {
       data: null,
     };
   }
-});
+}
 

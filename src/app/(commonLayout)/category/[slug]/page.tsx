@@ -3,6 +3,8 @@ import Container from "@/components/shared/Container";
 import { Title } from "@/components/ui/text";
 import { fetchCategories } from "@/services/product/category.actions";
 
+export const dynamic = 'force-dynamic';
+
 const CategoryPage = async ({
   params,
 }: {

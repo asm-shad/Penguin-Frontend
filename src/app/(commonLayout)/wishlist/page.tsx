@@ -2,6 +2,8 @@ import NoAccess from "@/components/modules/Cart/NoAccess";
 import WishListProducts from "@/components/modules/Cart/WishListProducts";
 import { getUserInfo } from "@/services/auth/getUserInfo";
 
+export const dynamic = "force-dynamic";
+
 const WishListPage = async () => {
   const user = await getUserInfo();
   

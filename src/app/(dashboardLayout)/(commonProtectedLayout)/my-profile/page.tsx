@@ -1,4 +1,5 @@
-// app/(dashboard)/my-profile/page.tsx
+export const dynamic = "force-dynamic";
+
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import MyProfile from "@/components/modules/MyProfile/MyProfile";

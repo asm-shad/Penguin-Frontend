@@ -1,8 +1,8 @@
-import React from 'react';
+export const dynamic = 'force-dynamic';
 
 const OrderIssuesPage = () => {
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-purple-50 to-indigo-100 p-4">
+    <div className="min-h-screen flex flex-col items-center justify-center bg-linear-to-br from-purple-50 to-indigo-100 p-4">
       <div className="max-w-2xl text-center space-y-6">
         <h1 className="text-5xl font-black text-gray-900 tracking-tight">
           ORDER ISSUES

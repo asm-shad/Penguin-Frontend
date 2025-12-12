@@ -2,6 +2,9 @@ import ProductCard from "@/components/modules/Product/ProductCard";
 import Container from "@/components/shared/Container";
 import { Title } from "@/components/ui/text";
 import { fetchHotProducts } from "@/services/product/product.actions";
+import { IProduct } from "@/types/product.interface";
+
+export const dynamic = 'force-static';
 
 const HotProductsPage = async () => {
   const result = await fetchHotProducts();
@@ -14,7 +17,7 @@ const HotProductsPage = async () => {
           Hot Deals of the Week
         </Title>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-2.5">
-          {products?.map((product) => (
+          {products?.map((product: IProduct) => (
             <ProductCard key={product?.id} product={product} />
           ))}
         </div>

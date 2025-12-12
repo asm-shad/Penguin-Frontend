@@ -8,8 +8,6 @@ import { CreateOrderDto, IOrderFilters, IUpdateOrderStatusDto } from "@/types/or
 import { updateOrderStatusZodSchema } from "@/zod/order.validation";
 import { cookies } from "next/headers";
 
-import { cache } from "react";
-
 // Create order
 export const createOrder = async (orderData: CreateOrderDto) => {
   try {
@@ -73,7 +71,7 @@ export const getOrderById = async (orderId: string) => {
 };
 
 // Get all orders (admin/staff)
-export const fetchAllOrders = cache(async (filters?: IOrderFilters) => {
+export const fetchAllOrders = async (filters?: IOrderFilters) => {
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
@@ -125,7 +123,7 @@ export const fetchAllOrders = cache(async (filters?: IOrderFilters) => {
       meta: undefined,
     };
   }
-});
+}
 
 export async function fetchOrders(queryString?: string) {
   try {
@@ -191,7 +189,7 @@ export async function getMyOrders(filters?: any) {
 }
 
 // Get order by ID
-export const fetchOrderById = cache(async (id: string) => {
+export const fetchOrderById = async (id: string) => {
   try {
     const res = await serverFetch.get(`/orders/${id}`);
 
@@ -217,10 +215,10 @@ export const fetchOrderById = cache(async (id: string) => {
       data: null,
     };
   }
-});
+}
 
 // Get order by order number
-export const fetchOrderByNumber = cache(async (orderNumber: string) => {
+export const fetchOrderByNumber = async (orderNumber: string) => {
   try {
     const res = await serverFetch.get(`/orders/my-orders/number/${orderNumber}`);
 
@@ -246,7 +244,7 @@ export const fetchOrderByNumber = cache(async (orderNumber: string) => {
       data: null,
     };
   }
-});
+}
 
 // Update order status
 export async function updateOrderStatus(
@@ -340,7 +338,7 @@ export const cancelOrder = async (id: string) => {
 };
 
 // Get order statistics
-export const fetchOrderStatistics = cache(async () => {
+export const fetchOrderStatistics = async () => {
   try {
     const res = await serverFetch.get("/orders/my-orders/statistics");
 
@@ -366,10 +364,10 @@ export const fetchOrderStatistics = cache(async () => {
       data: null,
     };
   }
-});
+}
 
 // Get admin order statistics
-export const fetchAdminOrderStatistics = cache(async () => {
+export const fetchAdminOrderStatistics = async () => {
   try {
     const res = await serverFetch.get("/orders/statistics");
 
@@ -395,4 +393,4 @@ export const fetchAdminOrderStatistics = cache(async () => {
       data: null,
     };
   }
-});
+}

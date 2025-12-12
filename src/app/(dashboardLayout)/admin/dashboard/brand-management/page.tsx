@@ -1,4 +1,6 @@
 // app/admin/dashboard/brand-management/page.tsx
+export const dynamic = 'force-dynamic';
+
 import BrandManagementHeader from "@/components/modules/Admin/BrandManagement/BrandManagementHeader";
 import BrandTable from "@/components/modules/Admin/BrandManagement/BrandTable";
 import RefreshButton from "@/components/modules/Dashboard/shared/RefreshButton";

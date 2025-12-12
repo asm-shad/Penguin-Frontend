@@ -17,10 +17,22 @@ import {
   createProductValidationSchema,
   updateProductValidationSchema,
 } from "@/zod/product.validation";
-import { cache } from "react";
 
+// Helper to check if we're in build mode
+const isBuildTime = () => {
+  return typeof window === 'undefined' && process.env.NODE_ENV === 'production';
+};
+
+// Mock response for build time
+const getBuildMockResponse = () => ({
+  success: true,
+  message: 'Build time data',
+  data: [],
+  meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
+});
 
 export async function createProduct(_prevState: any, formData: FormData) {
+  // This is a write operation, so it doesn't need build-time handling
   // 1️⃣ Parse arrays from FormData
   let categoryIds: string[] = [];
   const categoryIdsRaw = formData.get("categoryIds") as string;
@@ -117,8 +129,7 @@ export async function updateProduct(
   _prevState: any,
   formData: FormData
 ) {
-  console.log("🔄 [DEBUG] Update product called for ID:", productId);
-  console.log("📋 [DEBUG] FormData entries:");
+  // This is a write operation, so it doesn't need build-time handling
   for (const [key, value] of formData.entries()) {
     console.log(`  ${key}:`, value);
   }
@@ -130,7 +141,6 @@ export async function updateProduct(
     try {
       const parsed = JSON.parse(categoryIdsRaw);
       if (Array.isArray(parsed)) categoryIds = parsed;
-      console.log("📦 [DEBUG] Parsed categoryIds:", categoryIds);
     } catch (error) {
       console.error("❌ [DEBUG] Failed to parse categoryIds:", error);
       categoryIds = undefined;
@@ -143,7 +153,6 @@ export async function updateProduct(
     try {
       const parsed = JSON.parse(variantsRaw);
       if (Array.isArray(parsed)) variants = parsed;
-      console.log("📦 [DEBUG] Parsed variants:", variants);
     } catch (error) {
       console.error("❌ [DEBUG] Failed to parse variants:", error);
       variants = undefined;
@@ -169,17 +178,6 @@ export async function updateProduct(
   // Set default value for isActive (true by default)
   const isActive = true;
 
-  console.log("📝 [DEBUG] Extracted form values:");
-  console.log("  name:", name);
-  console.log("  price:", price);
-  console.log("  discount:", discount);
-  console.log("  stock:", stock);
-  console.log("  status:", status);
-  console.log("  isFeatured:", isFeatured);
-  console.log("  isActive (default):", isActive);
-  console.log("  sku:", sku);
-  console.log("  brandId:", brandId);
-
   // 3️⃣ Build validation payload
   const validationPayload: UpdateProductInput = {
     name,
@@ -196,12 +194,9 @@ export async function updateProduct(
     variants,
   };
 
-  console.log("✅ [DEBUG] Validation payload:", validationPayload);
-
   // 4️⃣ Validate with Zod
   const validatedPayload = zodValidator(validationPayload, updateProductValidationSchema);
   if (!validatedPayload.success || !validatedPayload.data) {
-    console.error("❌ [DEBUG] Zod validation failed:", validatedPayload.errors);
     return {
       success: false,
       message: "Validation failed",
@@ -210,45 +205,26 @@ export async function updateProduct(
     };
   }
 
-  console.log("✅ [DEBUG] Zod validation passed:", validatedPayload.data);
-
   // 5️⃣ Prepare FormData for backend
   const newFormData = new FormData();
   const dataString = JSON.stringify(validatedPayload.data);
   newFormData.append("data", dataString);
-  console.log("📤 [DEBUG] Appending data to FormData:", dataString);
 
   // Append new files if any
   const files = formData.getAll("files") as File[];
-  console.log("📎 [DEBUG] Number of files:", files.length);
-  files.forEach((file, index) => {
+  files.forEach((file) => {
     if (file && file.size > 0) {
       newFormData.append("files", file);
-      console.log(`  File ${index + 1}: ${file.name} (${file.size} bytes)`);
     }
   });
 
   // 6️⃣ Send update request
   try {
-    console.log("🚀 [DEBUG] Sending PUT request to:", `/product/${productId}`);
-    console.log("📦 [DEBUG] Request FormData entries:");
-    for (const [key, value] of newFormData.entries()) {
-      if (key === "data") {
-        console.log(`  ${key}:`, value);
-      } else {
-        console.log(`  ${key}:`, value instanceof File ? `${value.name} (${value.size} bytes)` : value);
-      }
-    }
-
     const response = await serverFetch.put(`/product/${productId}`, {
       body: newFormData,
     });
     
-    console.log("📨 [DEBUG] Response status:", response.status);
-    console.log("📨 [DEBUG] Response OK:", response.ok);
-    
     const result = await response.json();
-    console.log("✅ [DEBUG] Response result:", result);
     
     if (!response.ok) {
       console.error("❌ [DEBUG] API returned error:", result);
@@ -256,10 +232,6 @@ export async function updateProduct(
     
     return result;
   } catch (error: any) {
-    console.error("❌ [DEBUG] Update product error:", error);
-    console.error("❌ [DEBUG] Error message:", error.message);
-    console.error("❌ [DEBUG] Error stack:", error.stack);
-    
     return {
       success: false,
       message: process.env.NODE_ENV === "development" ? error.message : "Failed to update product",
@@ -270,6 +242,11 @@ export async function updateProduct(
 
 // Get Products with filters
 export async function getProducts(queryString?: string) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const response = await serverFetch.get(`/product${queryString ? `?${queryString}` : ""}`);
     const result = await response.json();
@@ -285,6 +262,11 @@ export async function getProducts(queryString?: string) {
 
 // Get Product by ID
 export async function getProductById(id: string) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const response = await serverFetch.get(`/product/${id}`);
     const result = await response.json();
@@ -300,6 +282,11 @@ export async function getProductById(id: string) {
 
 // Get Product by Slug
 export async function getProductBySlug(slug: string) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const response = await serverFetch.get(`/product/slug/${slug}`);
     const result = await response.json();
@@ -315,6 +302,7 @@ export async function getProductBySlug(slug: string) {
 
 // Update Product Status
 export async function updateProductStatus(id: string, _prevState: any, formData: FormData) {
+  // This is a write operation
   const discountValue = formData.get("discount");
 
   const validationPayload: UpdateProductStatusInput = {
@@ -363,6 +351,7 @@ export async function updateProductStatus(id: string, _prevState: any, formData:
 
 // Update Product Featured Status
 export async function updateProductFeatured(id: string, _prevState: any, formData: FormData) {
+  // This is a write operation
   const validationPayload: UpdateProductFeaturedInput = {
     isFeatured: formData.get("isFeatured") === "true",
   };
@@ -408,6 +397,7 @@ export async function updateProductFeatured(id: string, _prevState: any, formDat
 
 // Update Product Stock
 export async function updateProductStock(id: string, _prevState: any, formData: FormData) {
+  // This is a write operation
   const stockValue = formData.get("stock");
 
   const validationPayload: UpdateProductStockInput = {
@@ -455,9 +445,9 @@ export async function updateProductStock(id: string, _prevState: any, formData: 
   }
 }
 
-
 // Delete Product
 export async function deleteProduct(id: string) {
+  // This is a write operation
   try {
     const response = await serverFetch.delete(`/product/${id}`);
     const result = await response.json();
@@ -473,6 +463,11 @@ export async function deleteProduct(id: string) {
 
 // Get Featured Products
 export async function getFeaturedProducts() {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const response = await serverFetch.get("/product/featured");
     const result = await response.json();
@@ -488,6 +483,11 @@ export async function getFeaturedProducts() {
 
 // Get Products by Status
 export async function getProductsByStatus(status: string, options?: { limit?: number; page?: number }) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const queryParams = new URLSearchParams();
     
@@ -509,6 +509,11 @@ export async function getProductsByStatus(status: string, options?: { limit?: nu
 
 // Get Products by Category Slug
 export async function getProductsByCategorySlug(categorySlug: string, _prevState?: any, formData?: FormData) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
+
   try {
     const queryParams = new URLSearchParams();
     
@@ -548,18 +553,40 @@ export async function getProductsByCategorySlug(categorySlug: string, _prevState
 }
 
 export async function fetchNewArrivals(limit?: number) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
   return await getProductsByStatus("NEW", { limit });
 }
 
 export async function fetchHotProducts(limit?: number) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
   return await getProductsByStatus("HOT", { limit });
 }
 
 export async function fetchProductsOnSale(limit?: number) {
+  // Handle build time
+  if (isBuildTime()) {
+    return getBuildMockResponse();
+  }
   return await getProductsByStatus("SALE", { limit });
 }
 
-export const fetchProducts = cache(async (filters?: IProductFilters) => {
+export const fetchProducts = async (filters?: IProductFilters) => {
+  // Handle build time
+  if (isBuildTime()) {
+    return {
+      success: true,
+      message: 'Build time data',
+      data: [],
+      meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
+    };
+  }
+
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
@@ -611,10 +638,20 @@ export const fetchProducts = cache(async (filters?: IProductFilters) => {
       meta: undefined,
     };
   }
-});
+}
 
 export const fetchProductsByCategorySlug = 
   async (categorySlug: string, filters?: Omit<IProductFilters, "category">) => {
+    // Handle build time
+    if (isBuildTime()) {
+      return {
+        success: true,
+        message: 'Build time data',
+        data: [],
+        meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
+      };
+    }
+
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams();

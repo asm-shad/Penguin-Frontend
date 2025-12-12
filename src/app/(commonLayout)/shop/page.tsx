@@ -2,6 +2,8 @@ import Shop from "@/components/modules/Shop/Shop";
 import { fetchCategories } from "@/services/product/category.actions";
 import { fetchAllBrands } from "@/services/product/brand.actions";
 
+export const dynamic = 'force-dynamic';
+
 const ShopPage = async () => {
   const [categoriesResult, brandsResult] = await Promise.all([
     fetchCategories({

@@ -3,7 +3,6 @@
 "use server";
 
 import { serverFetch } from "@/lib/server-fetch";
-import { cache } from "react";
 
 export interface ProductStats {
   totalProducts: number;
@@ -56,7 +55,7 @@ export interface ProductDashboardData {
   recentProducts: any[];
 }
 
-export const fetchProductStats = cache(async (): Promise<ProductDashboardData> => {
+export const fetchProductStats = async (): Promise<ProductDashboardData> => {
   try {
     // Fetch all products to calculate stats
     const response = await serverFetch.get("/product");
@@ -117,7 +116,7 @@ export const fetchProductStats = cache(async (): Promise<ProductDashboardData> =
       recentProducts: [],
     };
   }
-});
+}
 
 // Helper functions
 function calculateProductStats(products: any[]): ProductStats {

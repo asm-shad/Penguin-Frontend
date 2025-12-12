@@ -6,6 +6,8 @@ import { Calendar, Clock } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 const BlogPage = async () => {
   // Fetch blog posts from your backend
   const blogsResult = await fetchBlogPosts({

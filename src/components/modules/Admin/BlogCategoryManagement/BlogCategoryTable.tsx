@@ -6,7 +6,7 @@ import { IBlogCategory } from "@/types/blog.interface";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { toast } from "sonner";
-import ManagementTable from "../../Dashboard/shared/ManagementTable";
+import ManagementTable, { Column } from "../../Dashboard/shared/ManagementTable";
 import { BlogCategoryColumns } from "./BlogCategoryColumns";
 import DeleteConfirmationDialog from "../../Dashboard/shared/DeleteConfirmationDialog";
 
@@ -50,7 +50,7 @@ const BlogCategoryTable = ({ categories }: BlogCategoryTableProps) => {
     <>
       <ManagementTable
         data={categories}
-        columns={BlogCategoryColumns}
+        columns={BlogCategoryColumns as Column<IBlogCategory>[]}
         onDelete={handleDelete}
         getRowKey={(category) => category.id}
         emptyMessage="No blog categories found"

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// components/modules/Coupon/CouponFormDialog.tsx
 "use client";
 import InputFieldError from "@/components/shared/InputFieldError";
 import { Button } from "@/components/ui/button";
@@ -16,13 +15,14 @@ import { useActionState, useEffect, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCoupon } from "@/services/admin/couponManagement.actions";
-import { DiscountType } from "@/types/coupon.interface";
+import { createCoupon, updateCoupon } from "@/services/admin/couponManagement.actions";
+import { DiscountType, ICoupon } from "@/types/coupon.interface";
 
 interface ICouponFormDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  coupon?: ICoupon; // Add optional coupon prop for editing
 }
 
 // Define the state type that matches IInputErrorState
@@ -38,12 +38,16 @@ const CouponFormDialog = ({
   open,
   onClose,
   onSuccess,
+  coupon, // Destructure the coupon prop
 }: ICouponFormDialogProps) => {
   const formRef = useRef<HTMLFormElement>(null);
   
+  // Choose action based on whether we're editing or creating
+  const action = coupon ? updateCoupon : createCoupon;
+  
   // Cast the action to match the expected signature
   const [state, formAction, pending] = useActionState(
-    createCoupon as (state: CouponFormState, formData: FormData) => Promise<CouponFormState>,
+    action as (state: CouponFormState, formData: FormData) => Promise<CouponFormState>,
     {
       success: false,
       message: '',
@@ -51,9 +55,27 @@ const CouponFormDialog = ({
     }
   );
   
-  const [discountType, setDiscountType] = useState<DiscountType>(DiscountType.PERCENTAGE);
-  const [isActive, setIsActive] = useState(true);
+  const [discountType, setDiscountType] = useState<DiscountType>(
+    coupon?.discountType || DiscountType.PERCENTAGE
+  );
+  const [isActive, setIsActive] = useState(coupon?.isActive ?? true);
   const processedStateRef = useRef<string | null>(null);
+
+  // Format date for datetime-local input
+  const formatDateForInput = (date: Date | string | undefined): string => {
+    if (!date) return '';
+    
+    const dateObj = date instanceof Date ? date : new Date(date);
+    
+    // Format to YYYY-MM-DDTHH:mm
+    const year = dateObj.getFullYear();
+    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+    const day = String(dateObj.getDate()).padStart(2, '0');
+    const hours = String(dateObj.getHours()).padStart(2, '0');
+    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
+    
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
+  };
 
   // Handle state changes from the action
   useEffect(() => {
@@ -66,7 +88,7 @@ const CouponFormDialog = ({
       processedStateRef.current = stateKey;
       
       if (state.success) {
-        toast.success(state.message || "Coupon created successfully");
+        toast.success(state.message || (coupon ? "Coupon updated successfully" : "Coupon created successfully"));
         
         setTimeout(() => {
           onClose();
@@ -76,10 +98,10 @@ const CouponFormDialog = ({
           }, 50);
         }, 100);
       } else {
-        toast.error(state.message || "Failed to create coupon");
+        toast.error(state.message || (coupon ? "Failed to update coupon" : "Failed to create coupon"));
       }
     }
-  }, [state, onSuccess, onClose]);
+  }, [state, onSuccess, onClose, coupon]);
 
   // Reset form when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
@@ -87,8 +109,13 @@ const CouponFormDialog = ({
       handleClose();
     } else {
       // Reset form state when opening
-      setDiscountType(DiscountType.PERCENTAGE);
-      setIsActive(true);
+      if (coupon) {
+        setDiscountType(coupon.discountType);
+        setIsActive(coupon.isActive);
+      } else {
+        setDiscountType(DiscountType.PERCENTAGE);
+        setIsActive(true);
+      }
       processedStateRef.current = null;
     }
   };
@@ -104,10 +131,13 @@ const CouponFormDialog = ({
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Create New Coupon</DialogTitle>
+          <DialogTitle>{coupon ? "Edit Coupon" : "Create New Coupon"}</DialogTitle>
         </DialogHeader>
 
         <form ref={formRef} action={formAction} className="space-y-4">
+          {/* Hidden field for coupon ID when editing */}
+          {coupon && <input type="hidden" name="id" value={coupon.id} />}
+          
           <input type="hidden" name="isActive" value={isActive.toString()} />
           <input type="hidden" name="discountType" value={discountType} />
 
@@ -118,9 +148,11 @@ const CouponFormDialog = ({
               name="code"
               placeholder="SUMMER25"
               className="font-mono uppercase"
-              defaultValue={state?.formData?.code || ""}
+              defaultValue={coupon?.code || state?.formData?.code || ""}
               required
+              disabled={!!coupon} // Disable code editing if it's an existing coupon
             />
+            {coupon && <p className="text-xs text-gray-500 mt-1">Coupon code cannot be changed</p>}
             <InputFieldError field="code" state={state} />
           </Field>
 
@@ -154,7 +186,7 @@ const CouponFormDialog = ({
                 min="0"
                 max={discountType === DiscountType.PERCENTAGE ? "100" : undefined}
                 step="0.01"
-                defaultValue={state?.formData?.discountValue || ""}
+                defaultValue={coupon?.discountValue || state?.formData?.discountValue || ""}
                 required
               />
               <InputFieldError field="discountValue" state={state} />
@@ -170,7 +202,7 @@ const CouponFormDialog = ({
                 type="number"
                 placeholder="0"
                 min="0"
-                defaultValue={state?.formData?.maxUses || "0"}
+                defaultValue={coupon?.maxUses?.toString() || state?.formData?.maxUses || "0"}
               />
               <InputFieldError field="maxUses" state={state} />
             </Field>
@@ -184,7 +216,7 @@ const CouponFormDialog = ({
                 placeholder="0"
                 min="0"
                 step="0.01"
-                defaultValue={state?.formData?.minOrderAmount || "0"}
+                defaultValue={coupon?.minOrderAmount?.toString() || state?.formData?.minOrderAmount || "0"}
               />
               <InputFieldError field="minOrderAmount" state={state} />
             </Field>
@@ -197,7 +229,7 @@ const CouponFormDialog = ({
                 id="validFrom"
                 name="validFrom"
                 type="datetime-local"
-                defaultValue={state?.formData?.validFrom || ""}
+                defaultValue={formatDateForInput(coupon?.validFrom) || state?.formData?.validFrom || ""}
                 required
               />
               <InputFieldError field="validFrom" state={state} />
@@ -209,7 +241,7 @@ const CouponFormDialog = ({
                 id="validUntil"
                 name="validUntil"
                 type="datetime-local"
-                defaultValue={state?.formData?.validUntil || ""}
+                defaultValue={formatDateForInput(coupon?.validUntil) || state?.formData?.validUntil || ""}
               />
               <InputFieldError field="validUntil" state={state} />
             </Field>
@@ -221,7 +253,7 @@ const CouponFormDialog = ({
               id="description"
               name="description"
               placeholder="e.g., Summer sale discount for all products"
-              defaultValue={state?.formData?.description || ""}
+              defaultValue={coupon?.description || state?.formData?.description || ""}
               rows={2}
             />
             <InputFieldError field="description" state={state} />
@@ -246,7 +278,10 @@ const CouponFormDialog = ({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating..." : "Create Coupon"}
+              {pending 
+                ? (coupon ? "Updating..." : "Creating...") 
+                : (coupon ? "Update Coupon" : "Create Coupon")
+              }
             </Button>
           </div>
         </form>

@@ -3,6 +3,7 @@ import "./globals.css";
 import { Toaster as HotToaster } from "react-hot-toast";
 import { Toaster } from "sonner";
 import LoginSuccessToast from "@/components/shared/LoginSuccessToast";
+import { Suspense } from "react";
 
 const RootLayout = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -19,8 +20,10 @@ const RootLayout = ({ children }: { children: React.ReactNode }) => {
             },
           }}
         />
-        <LogoutSuccessToast />
-        <LoginSuccessToast />
+        <Suspense fallback={null}>
+          <LogoutSuccessToast />
+          <LoginSuccessToast />
+        </Suspense>
       </body>
     </html>
   );

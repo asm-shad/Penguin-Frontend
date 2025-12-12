@@ -228,7 +228,7 @@ export interface CreateOrderDto {
 }
 
 export interface IInitPaymentDto {
-  gateway: PaymentGatewayType;
+  gateway?: PaymentGatewayType;
   successUrl?: string;
   cancelUrl?: string;
 }

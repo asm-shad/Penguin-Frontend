@@ -1,15 +1,13 @@
-// services/admin/couponManagement.actions.ts
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 "use server";
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { serverFetch } from "@/lib/server-fetch";
 import { DiscountType, ICoupon, ICouponValidationResult, ICreateCoupon, IUpdateCoupon } from "@/types/coupon.interface";
-import { revalidateTag } from "next/cache";
-import { cache } from "react";
 
 
 // Get all coupons with pagination
-export const fetchCoupons = cache(
+export const fetchCoupons =
   async (options?: {
     page?: number;
     limit?: number;
@@ -62,7 +60,6 @@ export const fetchCoupons = cache(
       };
     }
   }
-);
 
 // Get single coupon by ID
 export const fetchCouponById = async (id: string) => {

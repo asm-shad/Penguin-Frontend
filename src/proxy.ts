@@ -91,7 +91,7 @@ export async function proxy(request: NextRequest) {
     const userInfo = await getUserInfo();
 
     // User needs to reset password
-    if (userInfo.needPasswordChange) {
+    if (userInfo.needPasswordReset) {
       if (pathname !== "/reset-password") {
         const resetPasswordUrl = new URL("/reset-password", request.url);
         resetPasswordUrl.searchParams.set("redirect", pathname);
@@ -103,7 +103,7 @@ export async function proxy(request: NextRequest) {
     // User doesn't need password reset but is on reset-password page
     if (
       userInfo &&
-      !userInfo.needPasswordChange &&
+      !userInfo.needPasswordReset &&
       pathname === "/reset-password"
     ) {
       // USER role goes to home page, others go to their dashboard

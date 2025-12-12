@@ -1,4 +1,6 @@
 // app/admin/dashboard/category-management/page.tsx
+export const dynamic = 'force-dynamic';
+
 import CategoryManagementHeader from "@/components/modules/Admin/CategoryManagement/CategoryManagementHeader";
 import CategoryTable from "@/components/modules/Admin/CategoryManagement/CategoryTable";
 import RefreshButton from "@/components/modules/Dashboard/shared/RefreshButton";

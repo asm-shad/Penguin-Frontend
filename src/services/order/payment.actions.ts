@@ -224,7 +224,7 @@ export const handleSSLIPN = async (queryParams: Record<string, string>) => {
 // Handle Stripe webhook (public endpoint - no auth needed)
 export const handleStripeWebhook = async (payload: any, signature: string) => {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/payments/webhook/stripe`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BASE_API_URL}/webhook`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",

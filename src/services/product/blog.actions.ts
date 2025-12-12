@@ -7,10 +7,9 @@ import {
   IBlogPost,
   IBlogPostFilters,
 } from "@/types/blog.interface";
-import { cache } from "react";
 
 // Fetch all blog posts (with pagination and filters)
-export const fetchBlogPosts = cache(async (filters?: IBlogPostFilters) => {
+export const fetchBlogPosts = async (filters?: IBlogPostFilters) => {
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
@@ -59,10 +58,10 @@ export const fetchBlogPosts = cache(async (filters?: IBlogPostFilters) => {
       meta: undefined,
     };
   }
-});
+}
 
 // Fetch latest blog posts
-export const fetchLatestBlogPosts = cache(async (limit: number = 5) => {
+export const fetchLatestBlogPosts = async (limit: number = 5) => {
   try {
     const res = await serverFetch.get(`/blog-post/latest?limit=${limit}`);
 
@@ -88,10 +87,10 @@ export const fetchLatestBlogPosts = cache(async (limit: number = 5) => {
       data: [],
     };
   }
-});
+}
 
 // Fetch blog post by slug
-export const fetchBlogPostBySlug = cache(async (slug: string) => {
+export const fetchBlogPostBySlug = async (slug: string) => {
   try {
     const res = await serverFetch.get(`/blog-post/slug/${slug}`);
 
@@ -117,10 +116,10 @@ export const fetchBlogPostBySlug = cache(async (slug: string) => {
       data: null,
     };
   }
-});
+}
 
 // Fetch blog post by ID
-export const fetchBlogPostById = cache(async (id: string) => {
+export const fetchBlogPostById = async (id: string) => {
   try {
     const res = await serverFetch.get(`/blog-post/${id}`);
 
@@ -146,10 +145,10 @@ export const fetchBlogPostById = cache(async (id: string) => {
       data: null,
     };
   }
-});
+}
 
 // Fetch featured blog posts
-export const fetchFeaturedBlogPosts = cache(async (limit: number = 3) => {
+export const fetchFeaturedBlogPosts = async (limit: number = 3) => {
   try {
     const res = await serverFetch.get(
       `/blog-post?isFeatured=true&limit=${limit}`
@@ -177,10 +176,10 @@ export const fetchFeaturedBlogPosts = cache(async (limit: number = 3) => {
       data: [],
     };
   }
-});
+}
 
 // services/blog/blog-category.actions.ts
-export const fetchBlogCategories = cache(
+export const fetchBlogCategories = 
   async (options?: {
     searchTerm?: string;
     limit?: number;
@@ -231,10 +230,10 @@ export const fetchBlogCategories = cache(
       };
     }
   }
-);
+
 
 // Fetch blog category by slug
-export const fetchBlogCategoryBySlug = cache(async (slug: string) => {
+export const fetchBlogCategoryBySlug = async (slug: string) => {
   try {
     const res = await serverFetch.get(`/blog-category/slug/${slug}`);
 
@@ -260,4 +259,4 @@ export const fetchBlogCategoryBySlug = cache(async (slug: string) => {
       data: null,
     };
   }
-});
+}

@@ -9,6 +9,8 @@ import {
   fetchBlogPosts,
 } from "@/services/product/blog.actions";
 
+export const dynamic = 'force-dynamic';
+
 const BlogCategoryPage = async ({
   params,
 }: {

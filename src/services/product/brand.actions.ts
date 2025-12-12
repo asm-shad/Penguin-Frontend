@@ -3,10 +3,9 @@
 
 import { serverFetch } from "@/lib/server-fetch";
 import { IBrand } from "@/types/product.interface";
-import { cache } from "react";
 
 // Fetch popular brands (with product counts)
-export const fetchPopularBrands = cache(async () => {
+export const fetchPopularBrands = async () => {
   try {
     const res = await serverFetch.get("/brand/popular");
 
@@ -32,10 +31,10 @@ export const fetchPopularBrands = cache(async () => {
       data: [],
     };
   }
-});
+}
 
 // Fetch all brands (for shop page)
-export const fetchAllBrands = cache(
+export const fetchAllBrands = 
   async (options?: {
     searchTerm?: string;
     limit?: number;
@@ -83,10 +82,9 @@ export const fetchAllBrands = cache(
       };
     }
   }
-);
 
 // Fetch brand by slug
-export const fetchBrandBySlug = cache(async (slug: string) => {
+export const fetchBrandBySlug = async (slug: string) => {
   try {
     const res = await serverFetch.get(`/brand/slug/${slug}`);
 
@@ -112,4 +110,4 @@ export const fetchBrandBySlug = cache(async (slug: string) => {
       data: null,
     };
   }
-});
+}

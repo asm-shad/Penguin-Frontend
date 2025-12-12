@@ -3,7 +3,14 @@
 import { useState, useCallback } from "react";
 import { initPayment, initSSLPayment } from "@/services/order/payment.actions";
 import { redirectToStripeCheckout } from "@/services/order/stripe-utils";
-import { cancelOrder, createOrder, fetchMyOrders, fetchOrderById, fetchOrderStatistics } from "@/services/order/order.actions";
+import { 
+  cancelOrder, 
+  createOrder, 
+  getMyOrders,
+  fetchOrderById, 
+  fetchOrderStatistics 
+} from "@/services/order/order.actions";
+import { PaymentGatewayType } from "@/types/user.interface";
 
 export const useOrders = () => {
   const [loading, setLoading] = useState(false);
@@ -29,12 +36,12 @@ export const useOrders = () => {
     }
   }, []);
 
-  const getMyOrders = useCallback(async (filters?: any) => {
+  const getMyOrdersList = useCallback(async (filters?: any) => { // Renamed to avoid conflict
     setLoading(true);
     setError(null);
     
     try {
-      const result = await fetchMyOrders(filters);
+      const result = await getMyOrders(filters); // ✅ Now calling getMyOrders instead of fetchMyOrders
       
       if (!result.success) {
         throw new Error(result.message);
@@ -113,7 +120,7 @@ export const useOrders = () => {
     loading,
     error,
     createNewOrder,
-    getMyOrders,
+    getMyOrders: getMyOrdersList, // Return the renamed function
     getOrderDetails,
     cancelMyOrder,
     getStatistics,
@@ -130,7 +137,7 @@ export const usePayments = () => {
     
     try {
       const result = await initPayment(orderId, {
-        gateway,
+        gateway: gateway as PaymentGatewayType,
         successUrl: urls?.successUrl,
         cancelUrl: urls?.cancelUrl,
       });

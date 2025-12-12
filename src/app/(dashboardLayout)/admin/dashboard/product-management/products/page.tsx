@@ -9,6 +9,8 @@ import { fetchAllBrands } from "@/services/product/brand.actions";
 import { fetchCategories } from "@/services/product/category.actions";
 import { getProducts } from "@/services/product/product.actions";
 
+export const dynamic = 'force-dynamic';
+
 import { Suspense } from "react";
 
 const ProductManagementPage = async ({
