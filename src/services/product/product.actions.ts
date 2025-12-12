@@ -18,21 +18,8 @@ import {
   updateProductValidationSchema,
 } from "@/zod/product.validation";
 
-// Helper to check if we're in build mode
-const isBuildTime = () => {
-  return typeof window === 'undefined' && process.env.NODE_ENV === 'production';
-};
-
-// Mock response for build time
-const getBuildMockResponse = () => ({
-  success: true,
-  message: 'Build time data',
-  data: [],
-  meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
-});
 
 export async function createProduct(_prevState: any, formData: FormData) {
-  // This is a write operation, so it doesn't need build-time handling
   // 1️⃣ Parse arrays from FormData
   let categoryIds: string[] = [];
   const categoryIdsRaw = formData.get("categoryIds") as string;
@@ -129,7 +116,6 @@ export async function updateProduct(
   _prevState: any,
   formData: FormData
 ) {
-  // This is a write operation, so it doesn't need build-time handling
   for (const [key, value] of formData.entries()) {
     console.log(`  ${key}:`, value);
   }
@@ -194,6 +180,7 @@ export async function updateProduct(
     variants,
   };
 
+
   // 4️⃣ Validate with Zod
   const validatedPayload = zodValidator(validationPayload, updateProductValidationSchema);
   if (!validatedPayload.success || !validatedPayload.data) {
@@ -220,6 +207,14 @@ export async function updateProduct(
 
   // 6️⃣ Send update request
   try {
+    // for (const [key, value] of newFormData.entries()) {
+    //   if (key === "data") {
+    //     console.log(`  ${key}:`, value);
+    //   } else {
+    //     console.log(`  ${key}:`, value instanceof File ? `${value.name} (${value.size} bytes)` : value);
+    //   }
+    // }
+
     const response = await serverFetch.put(`/product/${productId}`, {
       body: newFormData,
     });
@@ -242,11 +237,6 @@ export async function updateProduct(
 
 // Get Products with filters
 export async function getProducts(queryString?: string) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const response = await serverFetch.get(`/product${queryString ? `?${queryString}` : ""}`);
     const result = await response.json();
@@ -262,11 +252,6 @@ export async function getProducts(queryString?: string) {
 
 // Get Product by ID
 export async function getProductById(id: string) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const response = await serverFetch.get(`/product/${id}`);
     const result = await response.json();
@@ -282,11 +267,6 @@ export async function getProductById(id: string) {
 
 // Get Product by Slug
 export async function getProductBySlug(slug: string) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const response = await serverFetch.get(`/product/slug/${slug}`);
     const result = await response.json();
@@ -302,7 +282,6 @@ export async function getProductBySlug(slug: string) {
 
 // Update Product Status
 export async function updateProductStatus(id: string, _prevState: any, formData: FormData) {
-  // This is a write operation
   const discountValue = formData.get("discount");
 
   const validationPayload: UpdateProductStatusInput = {
@@ -351,7 +330,6 @@ export async function updateProductStatus(id: string, _prevState: any, formData:
 
 // Update Product Featured Status
 export async function updateProductFeatured(id: string, _prevState: any, formData: FormData) {
-  // This is a write operation
   const validationPayload: UpdateProductFeaturedInput = {
     isFeatured: formData.get("isFeatured") === "true",
   };
@@ -397,7 +375,6 @@ export async function updateProductFeatured(id: string, _prevState: any, formDat
 
 // Update Product Stock
 export async function updateProductStock(id: string, _prevState: any, formData: FormData) {
-  // This is a write operation
   const stockValue = formData.get("stock");
 
   const validationPayload: UpdateProductStockInput = {
@@ -445,9 +422,9 @@ export async function updateProductStock(id: string, _prevState: any, formData: 
   }
 }
 
+
 // Delete Product
 export async function deleteProduct(id: string) {
-  // This is a write operation
   try {
     const response = await serverFetch.delete(`/product/${id}`);
     const result = await response.json();
@@ -463,11 +440,6 @@ export async function deleteProduct(id: string) {
 
 // Get Featured Products
 export async function getFeaturedProducts() {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const response = await serverFetch.get("/product/featured");
     const result = await response.json();
@@ -483,11 +455,6 @@ export async function getFeaturedProducts() {
 
 // Get Products by Status
 export async function getProductsByStatus(status: string, options?: { limit?: number; page?: number }) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const queryParams = new URLSearchParams();
     
@@ -509,11 +476,6 @@ export async function getProductsByStatus(status: string, options?: { limit?: nu
 
 // Get Products by Category Slug
 export async function getProductsByCategorySlug(categorySlug: string, _prevState?: any, formData?: FormData) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
-
   try {
     const queryParams = new URLSearchParams();
     
@@ -553,40 +515,18 @@ export async function getProductsByCategorySlug(categorySlug: string, _prevState
 }
 
 export async function fetchNewArrivals(limit?: number) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
   return await getProductsByStatus("NEW", { limit });
 }
 
 export async function fetchHotProducts(limit?: number) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
   return await getProductsByStatus("HOT", { limit });
 }
 
 export async function fetchProductsOnSale(limit?: number) {
-  // Handle build time
-  if (isBuildTime()) {
-    return getBuildMockResponse();
-  }
   return await getProductsByStatus("SALE", { limit });
 }
 
 export const fetchProducts = async (filters?: IProductFilters) => {
-  // Handle build time
-  if (isBuildTime()) {
-    return {
-      success: true,
-      message: 'Build time data',
-      data: [],
-      meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
-    };
-  }
-
   try {
     // Build query string from filters
     const queryParams = new URLSearchParams();
@@ -642,16 +582,6 @@ export const fetchProducts = async (filters?: IProductFilters) => {
 
 export const fetchProductsByCategorySlug = 
   async (categorySlug: string, filters?: Omit<IProductFilters, "category">) => {
-    // Handle build time
-    if (isBuildTime()) {
-      return {
-        success: true,
-        message: 'Build time data',
-        data: [],
-        meta: { total: 0, page: 1, limit: 10, totalPages: 1 }
-      };
-    }
-
     try {
       // Build query string from filters
       const queryParams = new URLSearchParams();
