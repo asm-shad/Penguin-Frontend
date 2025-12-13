@@ -1,8 +1,6 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
+import { IProduct, IProductVariant } from "@/types/product.interface";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import Cookies from "js-cookie";
-import { IProduct, IProductVariant } from "@/types/product.interface";
 
 export interface CartItem {
   product: IProduct;
@@ -11,52 +9,31 @@ export interface CartItem {
 }
 
 interface StoreState {
-  // ================= CART =================
+  // Cart
   items: CartItem[];
   addItem: (product: IProduct, variant?: IProductVariant) => void;
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
   resetCart: () => void;
-  getTotalPrice: () => number;
-  getSubTotalPrice: () => number;
-  getDiscountTotal: () => number;
+  getTotalPrice: () => number; // Final price after discounts
+  getSubTotalPrice: () => number; // Original price total before discounts
+  getDiscountTotal: () => number; // Total discount amount
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
 
-  // ================= FAVORITES =================
+  // Favorites
   favoriteProduct: IProduct[];
   addToFavorite: (product: IProduct) => Promise<void>;
   removeFromFavorite: (productId: string) => void;
   resetFavorite: () => void;
-
-  // ================= AUTH =================
-  accessToken: string | null;
-  setAccessToken: (token: string) => void;
-  clearAccessToken: () => void;
 }
-
-// Custom storage adapter for Zustand + TypeScript
-const storage = {
-  getItem: (name: string) => {
-    if (typeof window === "undefined") return null;
-    const value = localStorage.getItem(name);
-    return value ? JSON.parse(value) : null;
-  },
-  setItem: (name: string, value: any) => {
-    if (typeof window === "undefined") return;
-    localStorage.setItem(name, JSON.stringify(value));
-  },
-  removeItem: (name: string) => {
-    if (typeof window === "undefined") return;
-    localStorage.removeItem(name);
-  },
-};
 
 const useStore = create<StoreState>()(
   persist(
     (set, get) => ({
-      // ================= CART =================
+      // Cart
       items: [],
+
       addItem: (product, variant) =>
         set((state) => {
           const existingItem = state.items.find(
@@ -64,6 +41,7 @@ const useStore = create<StoreState>()(
               item.product.id === product.id &&
               item.selectedVariant?.id === variant?.id
           );
+
           if (existingItem) {
             return {
               items: state.items.map((item) =>
@@ -73,86 +51,108 @@ const useStore = create<StoreState>()(
                   : item
               ),
             };
+          } else {
+            return {
+              items: [
+                ...state.items,
+                { product, quantity: 1, selectedVariant: variant },
+              ],
+            };
           }
-          return {
-            items: [
-              ...state.items,
-              { product, quantity: 1, selectedVariant: variant },
-            ],
-          };
         }),
+
       removeItem: (productId) =>
         set((state) => ({
           items: state.items.reduce((acc, item) => {
             if (item.product.id === productId) {
-              if (item.quantity > 1)
+              if (item.quantity > 1) {
                 acc.push({ ...item, quantity: item.quantity - 1 });
-            } else acc.push(item);
+              }
+            } else {
+              acc.push(item);
+            }
             return acc;
           }, [] as CartItem[]),
         })),
+
       deleteCartProduct: (productId) =>
         set((state) => ({
           items: state.items.filter((item) => item.product.id !== productId),
         })),
+
       resetCart: () => set({ items: [] }),
-      getTotalPrice: () =>
-        get().items.reduce((total, item) => {
-          const base = item.selectedVariant?.price || item.product.price || 0;
+
+      // Final price after all discounts (what customer pays)
+      getTotalPrice: () => {
+        return get().items.reduce((total, item) => {
+          const basePrice =
+            item.selectedVariant?.price || item.product.price || 0;
           const discount = item.product.discount || 0;
-          return total + (base - (base * discount) / 100) * item.quantity;
-        }, 0),
-      getSubTotalPrice: () =>
-        get().items.reduce((total, item) => {
-          const base = item.selectedVariant?.price || item.product.price || 0;
-          return total + base * item.quantity;
-        }, 0),
-      getDiscountTotal: () =>
-        get().items.reduce((total, item) => {
-          const base = item.selectedVariant?.price || item.product.price || 0;
+          const salePrice = basePrice - (basePrice * discount) / 100;
+          return total + salePrice * item.quantity;
+        }, 0);
+      },
+
+      // Original price total before discounts
+      getSubTotalPrice: () => {
+        return get().items.reduce((total, item) => {
+          const basePrice =
+            item.selectedVariant?.price || item.product.price || 0;
+          return total + basePrice * item.quantity;
+        }, 0);
+      },
+
+      // Total discount amount
+      getDiscountTotal: () => {
+        return get().items.reduce((total, item) => {
+          const basePrice =
+            item.selectedVariant?.price || item.product.price || 0;
           const discount = item.product.discount || 0;
-          return total + ((base * discount) / 100) * item.quantity;
-        }, 0),
-      getItemCount: (productId) =>
-        get().items.find((item) => item.product.id === productId)?.quantity ||
-        0,
+          const discountAmount = (basePrice * discount) / 100;
+          return total + discountAmount * item.quantity;
+        }, 0);
+      },
+
+      getItemCount: (productId) => {
+        const item = get().items.find((item) => item.product.id === productId);
+        return item ? item.quantity : 0;
+      },
+
       getGroupedItems: () => get().items,
 
-      // ================= FAVORITES =================
+      // Favorites
       favoriteProduct: [],
-      addToFavorite: (product) =>
-        new Promise<void>((resolve) => {
-          set((state) => ({
-            favoriteProduct: state.favoriteProduct.some(
-              (p) => p.id === product.id
-            )
-              ? state.favoriteProduct.filter((p) => p.id !== product.id)
-              : [...state.favoriteProduct, product],
-          }));
-          resolve();
-        }),
-      removeFromFavorite: (productId) =>
-        set((state) => ({
-          favoriteProduct: state.favoriteProduct.filter(
-            (p) => p.id !== productId
-          ),
-        })),
-      resetFavorite: () => set({ favoriteProduct: [] }),
 
-      // ================= AUTH =================
-      accessToken: Cookies.get("accessToken") || null,
-      setAccessToken: (token: string) => {
-        Cookies.set("accessToken", token);
-        set({ accessToken: token });
+      addToFavorite: (product: IProduct) => {
+        return new Promise<void>((resolve) => {
+          set((state: StoreState) => {
+            const isFavorite = state.favoriteProduct.some(
+              (item) => item.id === product.id
+            );
+            return {
+              favoriteProduct: isFavorite
+                ? state.favoriteProduct.filter((item) => item.id !== product.id)
+                : [...state.favoriteProduct, { ...product }],
+            };
+          });
+          resolve();
+        });
       },
-      clearAccessToken: () => {
-        Cookies.remove("accessToken");
-        set({ accessToken: null });
+
+      removeFromFavorite: (productId: string) => {
+        set((state: StoreState) => ({
+          favoriteProduct: state.favoriteProduct.filter(
+            (item) => item?.id !== productId
+          ),
+        }));
+      },
+
+      resetFavorite: () => {
+        set({ favoriteProduct: [] });
       },
     }),
     {
-      name: "genzmart-store",
-      storage, // ✅ Use custom adapter
+      name: "cart-store",
     }
   )
 );

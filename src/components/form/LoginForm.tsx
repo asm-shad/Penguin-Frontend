@@ -1,3 +1,4 @@
+// components/auth/LoginForm.tsx
 "use client";
 import { useActionState, useEffect } from "react";
 import { Input } from "../ui/input";
@@ -7,12 +8,21 @@ import { Button } from "../ui/button";
 import InputFieldError from "../shared/InputFieldError";
 import { loginUser } from "@/services/auth/loginUser";
 
-const LoginForm = ({ redirect }: { redirect?: string }) => {
+const LoginForm = ({
+  redirect,
+}: {
+  redirect?: string;
+  onSuccess?: () => void;
+}) => {
   const [state, formAction, isPending] = useActionState(loginUser, null);
 
   useEffect(() => {
-    if (state && !state.success && state.message) {
-      toast.error(state.message);
+    if (state) {
+      if (!state.success && state.message) {
+        toast.error(state.message);
+      }
+      // If redirect happens, the server action will handle it
+      // We don't need to handle success here since it redirects
     }
   }, [state]);
 

@@ -1,12 +1,18 @@
+// components/shared/LogoutButton.tsx
 "use client";
 
 import { logoutUser } from "@/services/auth/logoutUser";
 import { Button } from "../ui/button";
+import { useAuthStore } from "../../../auth.store";
 
 const LogoutButton = () => {
+  const logoutStore = useAuthStore((state) => state.logout);
+
   const handleLogout = async () => {
-    await logoutUser();
+    logoutStore(); // Clear Zustand state immediately for better UX
+    await logoutUser(); // Then clear cookies and redirect
   };
+
   return (
     <Button variant={"destructive"} onClick={handleLogout}>
       Logout
