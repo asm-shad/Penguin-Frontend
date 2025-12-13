@@ -1,8 +1,8 @@
-// store/useStore.ts
-import { IProduct, IProductVariant } from "@/types/product.interface";
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import Cookies from "js-cookie";
+import { IProduct, IProductVariant } from "@/types/product.interface";
 
 export interface CartItem {
   product: IProduct;
@@ -34,6 +34,23 @@ interface StoreState {
   setAccessToken: (token: string) => void;
   clearAccessToken: () => void;
 }
+
+// Custom storage adapter for Zustand + TypeScript
+const storage = {
+  getItem: (name: string) => {
+    if (typeof window === "undefined") return null;
+    const value = localStorage.getItem(name);
+    return value ? JSON.parse(value) : null;
+  },
+  setItem: (name: string, value: any) => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem(name, JSON.stringify(value));
+  },
+  removeItem: (name: string) => {
+    if (typeof window === "undefined") return;
+    localStorage.removeItem(name);
+  },
+};
 
 const useStore = create<StoreState>()(
   persist(
@@ -134,7 +151,8 @@ const useStore = create<StoreState>()(
       },
     }),
     {
-      name: "cart-store", // persistent storage key
+      name: "genzmart-store",
+      storage, // ✅ Use custom adapter
     }
   )
 );
