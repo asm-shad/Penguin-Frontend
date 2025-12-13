@@ -1,6 +1,7 @@
 import Footer from "@/components/shared/Footer";
 import Navbar from "@/components/shared/Navbar";
 import type { Metadata } from "next";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: {
@@ -18,9 +19,13 @@ export default function CommonDashboardLayout({
   return (
     <div className="font-poppins antialiased">
       <div className="flex flex-col min-h-screen">
-        <Navbar />
+        <Suspense>
+          <Navbar />
+        </Suspense>
         <main className="flex-1 ">{children}</main>
-        <Footer />
+        <Suspense>
+          <Footer />
+        </Suspense>
       </div>
     </div>
   );
