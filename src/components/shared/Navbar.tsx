@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { Logs, LayoutDashboard } from "lucide-react";
+import { useEffect, useState } from "react";
 
 import MobileMenu from "./MobileMenu";
 import Logo from "./Logo";
@@ -15,7 +16,15 @@ import FavoriteButton from "../modules/SingleProduct/FavoriteButton";
 import useStore from "../../../store";
 
 const Navbar = () => {
-  const accessToken = useStore((state) => state.accessToken);
+  // Only read token from Zustand store
+  const storeAccessToken = useStore((state) => state.accessToken);
+
+  const [accessToken, setLocalAccessToken] = useState<string | null>(null);
+
+  // Hydrate client-side token
+  useEffect(() => {
+    setLocalAccessToken(storeAccessToken);
+  }, [storeAccessToken]);
 
   return (
     <header className="sticky top-0 z-50 py-5 bg-white/70 backdrop-blur-md">
