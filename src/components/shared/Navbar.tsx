@@ -1,58 +1,62 @@
+"use client";
+
 import Link from "next/link";
 import { Logs, LayoutDashboard } from "lucide-react";
+import Cookies from "js-cookie";
+import { useState } from "react";
+
 import MobileMenu from "./MobileMenu";
 import Logo from "./Logo";
 import HeaderMenu from "./HeaderMenu";
 import SearchBar from "./SearchBar";
 import CartIcon from "./CartIcon";
 import Container from "./Container";
-import { getCookie } from "@/services/auth/tokenHandlers";
 import { Button } from "../ui/button";
 import LogoutButton from "./LogoutButton";
 import FavoriteButton from "../modules/SingleProduct/FavoriteButton";
 
-const Navbar = async () => {
-  const accessToken = await getCookie("accessToken");
+const Navbar = () => {
+  // ✅ Read cookie during initial render
+  const [accessToken] = useState<string | null>(
+    () => Cookies.get("accessToken") || null
+  );
 
   return (
     <header className="sticky top-0 z-50 py-5 bg-white/70 backdrop-blur-md">
       <Container className="flex items-center justify-between text-lightColor">
-        <div className="w-auto md:w-1/3 flex items-center gap-2.5 justify-start md:gap-0">
+        <div className="w-auto md:w-1/3 flex items-center gap-2.5">
           <MobileMenu />
           <Logo />
         </div>
+
         <HeaderMenu />
+
         <div className="w-auto md:w-1/3 flex items-center justify-end gap-5">
           <SearchBar />
           <CartIcon />
           <FavoriteButton />
 
-          {/* Dashboard button for logged-in users */}
           {accessToken && (
             <Link
-              href="/dashboard"
-              className="group relative hover:text-shop_light_green hoverEffect"
+              href="/user"
               title="Dashboard"
+              className="hover:text-shop_light_green"
             >
               <LayoutDashboard className="h-5 w-5" />
             </Link>
           )}
 
-          {/* Orders link (only for logged-in) */}
           {accessToken && (
             <Link
-              href={"/orders"}
-              className="group relative hover:text-shop_light_green hoverEffect"
+              href="/orders"
               title="My Orders"
+              className="hover:text-shop_light_green"
             >
-              <Logs />
-              <span className="absolute -top-1 -right-1 bg-shop_btn_dark_green text-white h-3.5 w-3.5 rounded-full text-xs font-semibold flex items-center justify-center">
-                {/* {orders?.length ? orders?.length : 0} */}
-              </span>
+              <Logs className="h-5 w-5" />
             </Link>
           )}
 
-          <div className="hidden md:flex items-center space-x-2">
+          <div className="hidden md:flex items-center">
             {accessToken ? (
               <LogoutButton />
             ) : (
