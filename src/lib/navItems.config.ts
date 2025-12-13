@@ -238,7 +238,7 @@ export const productManagerNavItems: NavSection[] = [
         title: "Product Dashboard",
         href: "/admin/dashboard/product-management",
         icon: "LayoutDashboard",
-        roles: ["SUPER_ADMIN", "ADMIN","PRODUCT_MANAGER"],
+        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
       },
       {
         title: "All Products",
@@ -370,30 +370,30 @@ export const orderManagementNavItems: NavSection[] = [
         icon: "ShoppingCart",
         roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
       },
-      {
-        title: "Pending Orders",
-        href: "/admin/orders/pending",
-        icon: "Clock",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Process Orders",
-        href: "/admin/orders/process",
-        icon: "Truck",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Shipping",
-        href: "/admin/shipping",
-        icon: "Package",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
-      {
-        title: "Returns & Refunds",
-        href: "/admin/returns",
-        icon: "RotateCcw",
-        roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
-      },
+      // {
+      //   title: "Pending Orders",
+      //   href: "/admin/orders/pending",
+      //   icon: "Clock",
+      //   roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+      // },
+      // {
+      //   title: "Process Orders",
+      //   href: "/admin/orders/process",
+      //   icon: "Truck",
+      //   roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+      // },
+      // {
+      //   title: "Shipping",
+      //   href: "/admin/shipping",
+      //   icon: "Package",
+      //   roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+      // },
+      // {
+      //   title: "Returns & Refunds",
+      //   href: "/admin/returns",
+      //   icon: "RotateCcw",
+      //   roles: ["SUPER_ADMIN", "ADMIN", "CUSTOMER_SUPPORT"],
+      // },
     ],
   },
 ];
@@ -460,7 +460,6 @@ export const catalogManagementNavItems: NavSection[] = [
   },
 ];
 
-
 // MARKETING MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
 // export const marketingManagementNavItems: NavSection[] = [
 //   {
@@ -489,43 +488,43 @@ export const catalogManagementNavItems: NavSection[] = [
 // ];
 
 // BLOG MANAGEMENT (Accessible by SUPER_ADMIN, ADMIN, PRODUCT_MANAGER)
-export const blogNavItems: NavSection[] = [
-  {
-    title: "Blog Management",
-    items: [
-      {
-        title: "Blog Posts",
-        href: "/admin/blog/posts",
-        icon: "FileText",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Write New Post",
-        href: "/admin/blog/write",
-        icon: "Edit",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Blog Categories",
-        href: "/admin/blog/categories",
-        icon: "Folder",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Add Blog Category",
-        href: "/admin/blog/categories/add",
-        icon: "FolderPlus",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-      {
-        title: "Authors",
-        href: "/admin/blog/authors",
-        icon: "Users",
-        roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
-      },
-    ],
-  },
-];
+// export const blogNavItems: NavSection[] = [
+//   {
+//     title: "Blog Management",
+//     items: [
+//       {
+//         title: "Blog Posts",
+//         href: "/admin/blog/posts",
+//         icon: "FileText",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//       {
+//         title: "Write New Post",
+//         href: "/admin/blog/write",
+//         icon: "Edit",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//       {
+//         title: "Blog Categories",
+//         href: "/admin/blog/categories",
+//         icon: "Folder",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//       {
+//         title: "Add Blog Category",
+//         href: "/admin/blog/categories/add",
+//         icon: "FolderPlus",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//       {
+//         title: "Authors",
+//         href: "/admin/blog/authors",
+//         icon: "Users",
+//         roles: ["SUPER_ADMIN", "ADMIN", "PRODUCT_MANAGER"],
+//       },
+//     ],
+//   },
+// ];
 
 // ==================== MAIN FUNCTION: Get Navigation by Role ====================
 export const getNavItemsByRole = (role: UserRole): NavSection[] => {
@@ -543,7 +542,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
         // ...marketingManagementNavItems,
-        ...blogNavItems,
+        // ...blogNavItems,
       ];
 
     case "ADMIN":
@@ -556,7 +555,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...customerManagementNavItems,
         ...catalogManagementNavItems,
         // ...marketingManagementNavItems,
-        ...blogNavItems,
+        // ...blogNavItems,
       ];
 
     case "PRODUCT_MANAGER":
@@ -564,7 +563,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
         ...commonNavItems,
         ...productManagerNavItems,
         ...catalogManagementNavItems,
-        ...blogNavItems,
+        // ...blogNavItems,
       ];
 
     case "CUSTOMER_SUPPORT":
@@ -576,11 +575,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
       ];
 
     case "USER":
-      return [
-        ...commonNavItems,
-        ...userAccountNavItems,
-        ...userNavItems,
-      ];
+      return [...commonNavItems, ...userAccountNavItems, ...userNavItems];
 
     default:
       return commonNavItems;
@@ -593,9 +588,9 @@ export const getFlattenedNavItems = (role: UserRole) => {
   const navSections = getNavItemsByRole(role);
   const flattenedItems: any[] = [];
 
-  navSections.forEach(section => {
+  navSections.forEach((section) => {
     if (section.items) {
-      section.items.forEach(item => {
+      section.items.forEach((item) => {
         // Only include items that this role has access to
         if (item.roles.includes(role)) {
           flattenedItems.push({
@@ -612,35 +607,36 @@ export const getFlattenedNavItems = (role: UserRole) => {
 
 // Check if user has access to a specific route
 export const hasAccessToRoute = (
-  role: UserRole, 
+  role: UserRole,
   routePath: string
 ): boolean => {
   const navItems = getFlattenedNavItems(role);
-  return navItems.some(item => item.href === routePath);
+  return navItems.some((item) => item.href === routePath);
 };
 
 // Get available routes for a role
 export const getAvailableRoutes = (role: UserRole): string[] => {
   const navItems = getFlattenedNavItems(role);
-  return navItems.map(item => item.href);
+  return navItems.map((item) => item.href);
 };
 
 // Filter sections to only show sections with visible items for current role
 export const getFilteredNavSections = (role: UserRole): NavSection[] => {
   const navSections = getNavItemsByRole(role);
-  
+
   return navSections
-    .map(section => {
+    .map((section) => {
       if (section.items) {
-        const visibleItems = section.items.filter(item => 
+        const visibleItems = section.items.filter((item) =>
           item.roles.includes(role)
         );
         return { ...section, items: visibleItems };
       }
       return section;
     })
-    .filter(section => 
-      // Keep sections that have items OR don't have items array (header-only sections)
-      !section.items || section.items.length > 0
+    .filter(
+      (section) =>
+        // Keep sections that have items OR don't have items array (header-only sections)
+        !section.items || section.items.length > 0
     );
 };
