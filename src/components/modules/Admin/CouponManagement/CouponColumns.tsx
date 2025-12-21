@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-// components/modules/Coupon/CouponColumns.tsx
 import { Badge } from "@/components/ui/badge";
 import { ICoupon, DiscountType } from "@/types/coupon.interface";
 import { format } from "date-fns";
@@ -17,7 +16,7 @@ export const couponColumns: Column<ICoupon>[] = [
     accessor: (coupon) => {
       // Safely handle undefined discountValue
       const discountValue = coupon.discountValue || 0;
-      
+
       return (
         <div className="font-semibold">
           {coupon.discountType === DiscountType.PERCENTAGE ? (
@@ -35,10 +34,11 @@ export const couponColumns: Column<ICoupon>[] = [
       const now = new Date();
       const validFrom = new Date(coupon.validFrom);
       const validUntil = coupon.validUntil ? new Date(coupon.validUntil) : null;
-      
+
       let status = "Active";
-      let variant: "default" | "destructive" | "outline" | "secondary" = "default";
-      
+      let variant: "default" | "destructive" | "outline" | "secondary" =
+        "default";
+
       if (!coupon.isActive) {
         status = "Inactive";
         variant = "destructive";
@@ -52,7 +52,7 @@ export const couponColumns: Column<ICoupon>[] = [
         status = "Used Up";
         variant = "secondary";
       }
-      
+
       return <Badge variant={variant}>{status}</Badge>;
     },
   },
@@ -74,9 +74,13 @@ export const couponColumns: Column<ICoupon>[] = [
     header: "Dates",
     accessor: (coupon) => {
       try {
-        const validFrom = coupon.validFrom ? new Date(coupon.validFrom) : new Date();
-        const validUntil = coupon.validUntil ? new Date(coupon.validUntil) : null;
-        
+        const validFrom = coupon.validFrom
+          ? new Date(coupon.validFrom)
+          : new Date();
+        const validUntil = coupon.validUntil
+          ? new Date(coupon.validUntil)
+          : null;
+
         return (
           <div className="text-sm space-y-1">
             <div className="font-medium">
@@ -90,7 +94,7 @@ export const couponColumns: Column<ICoupon>[] = [
           </div>
         );
       } catch (error: any) {
-        console.log(error)
+        console.log(error);
         return <div className="text-sm text-red-500">Invalid date</div>;
       }
     },
@@ -99,10 +103,9 @@ export const couponColumns: Column<ICoupon>[] = [
     header: "Min. Order",
     accessor: (coupon) => (
       <div className="text-sm">
-        {(coupon.minOrderAmount || 0) > 0 
-          ? `$${(coupon.minOrderAmount || 0).toFixed(2)}` 
-          : "No minimum"
-        }
+        {(coupon.minOrderAmount || 0) > 0
+          ? `$${(coupon.minOrderAmount || 0).toFixed(2)}`
+          : "No minimum"}
       </div>
     ),
   },
@@ -118,7 +121,9 @@ export const couponColumns: Column<ICoupon>[] = [
     header: "Created",
     accessor: (coupon) => {
       try {
-        const createdAt = coupon.createdAt ? new Date(coupon.createdAt) : new Date();
+        const createdAt = coupon.createdAt
+          ? new Date(coupon.createdAt)
+          : new Date();
         return format(createdAt, "MMM dd, yyyy");
       } catch (error: any) {
         console.log(error);

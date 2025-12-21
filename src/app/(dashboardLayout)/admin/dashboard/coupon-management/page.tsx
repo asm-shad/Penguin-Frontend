@@ -4,11 +4,11 @@ import CouponTable from "@/components/modules/Admin/CouponManagement/CouponTable
 import RefreshButton from "@/components/modules/Dashboard/shared/RefreshButton";
 import TablePagination from "@/components/modules/Dashboard/shared/TablePagination";
 import { TableSkeleton } from "@/components/modules/Dashboard/shared/TableSkeleton";
-import { fetchCoupons } from "@/services/admin/couponManagement.actions";
+import { getCoupons } from "@/services/admin/couponManagement.actions";
 import { Suspense } from "react";
 
 // This directive tells Next.js to render this page on each request
-export const dynamic = 'force-dynamic';
+export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 const CouponManagementPage = async ({
@@ -17,29 +17,34 @@ const CouponManagementPage = async ({
   searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }) => {
   const searchParamsObj = await searchParams;
-  
+
   // Extract pagination and search parameters
-  const page = searchParamsObj.page ? parseInt(searchParamsObj.page as string) : 1;
-  const limit = searchParamsObj.limit ? parseInt(searchParamsObj.limit as string) : 10;
+  const page = searchParamsObj.page
+    ? parseInt(searchParamsObj.page as string)
+    : 1;
+  const limit = searchParamsObj.limit
+    ? parseInt(searchParamsObj.limit as string)
+    : 10;
   const searchTerm = searchParamsObj.search as string | undefined;
   const isActive = searchParamsObj.isActive as string | undefined;
   const sortBy = searchParamsObj.sortBy as string | undefined;
   const sortOrder = searchParamsObj.sortOrder as "asc" | "desc" | undefined;
-  
+
   // Call with pagination options
-  const result = await fetchCoupons({
+  const result = await getCoupons({
     page,
     limit,
     searchTerm,
-    isActive: isActive ? isActive === 'true' : undefined,
+    isActive: isActive ? isActive === "true" : undefined,
     sortBy,
     sortOrder,
   });
-  
+
   // Calculate total pages from meta
-  const totalPages = result.meta?.totalPages || 
+  const totalPages =
+    result.meta?.totalPages ||
     Math.ceil((result.meta?.total || 1) / (result.meta?.limit || limit));
-  
+
   return (
     <div className="space-y-6">
       <CouponManagementHeader />

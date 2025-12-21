@@ -1,323 +1,192 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-
 "use server";
 
 import { serverFetch } from "@/lib/server-fetch";
-import { DiscountType, ICoupon, ICouponValidationResult, ICreateCoupon, IUpdateCoupon } from "@/types/coupon.interface";
+import { revalidateTag } from "next/cache";
 
+// Simple FormData to JSON converter
+function formDataToJSON(formData: FormData) {
+  const data: any = {};
 
-// Get all coupons with pagination
-export const fetchCoupons =
-  async (options?: {
-    page?: number;
-    limit?: number;
-    searchTerm?: string;
-    isActive?: boolean;
-    valid?: boolean;
-    sortBy?: string;
-    sortOrder?: "asc" | "desc";
-  }) => {
-    try {
-      const queryParams = new URLSearchParams({
-        page: (options?.page || 1).toString(),
-        limit: (options?.limit || 10).toString(),
-        ...(options?.searchTerm && { searchTerm: options.searchTerm }),
-        ...(options?.isActive !== undefined && { isActive: options.isActive.toString() }),
-        ...(options?.valid !== undefined && { valid: options.valid.toString() }),
-        ...(options?.sortBy && { sortBy: options.sortBy }),
-        ...(options?.sortOrder && { sortOrder: options.sortOrder }),
-      });
-
-      const response = await serverFetch.get(`/coupon?${queryParams}`);
-
-      if (!response.ok) {
-        throw new Error("Failed to fetch coupons");
+  formData.forEach((value, key) => {
+    if (key === "isActive") {
+      data[key] = value === "true";
+    } else if (key === "discountValue" || key === "minOrderAmount") {
+      const num = parseFloat(value.toString());
+      if (!isNaN(num)) data[key] = num;
+    } else if (key === "maxUses") {
+      const num = parseInt(value.toString());
+      if (!isNaN(num)) data[key] = num > 0 ? num : undefined;
+    } else if (key === "validFrom" || key === "validUntil") {
+      if (value && value.toString().trim()) {
+        const date = new Date(value.toString());
+        if (!isNaN(date.getTime())) data[key] = date;
       }
-
-      const result = await response.json();
-
-      if (!result.success) {
-        throw new Error(result.message || "Failed to fetch coupons");
-      }
-
-      return {
-        success: true,
-        data: result.data as ICoupon[],
-        meta: result.meta,
-      };
-    } catch (error: any) {
-      console.error("Error fetching coupons:", error);
-      return {
-        success: false,
-        message: error.message || "Failed to fetch coupons",
-        data: [],
-        meta: { 
-          page: options?.page || 1, 
-          limit: options?.limit || 10, 
-          total: 0, 
-          totalPages: 0 
-        },
-      };
+    } else if (value && value.toString().trim()) {
+      data[key] = value.toString().trim();
     }
+  });
+
+  // Convert FIXED_AMOUNT to FIXED for backend
+  if (data.discountType === "FIXED_AMOUNT") {
+    data.discountType = "FIXED";
   }
 
-// Get single coupon by ID
-export const fetchCouponById = async (id: string) => {
+  return data;
+}
+
+// For useActionState - takes FormData
+export async function createCoupon(_prevState: any, formData: FormData) {
   try {
-    const response = await serverFetch.get(`/coupon/${id}`);
+    const couponData = formDataToJSON(formData);
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch coupon");
-    }
+    // Set defaults
+    if (couponData.minOrderAmount === undefined) couponData.minOrderAmount = 0;
+    if (couponData.isActive === undefined) couponData.isActive = true;
 
-    const result = await response.json();
-
-    if (!result.success) {
-      throw new Error(result.message || "Failed to fetch coupon");
-    }
-
-    return {
-      success: true,
-      data: result.data as ICoupon,
-    };
-  } catch (error: any) {
-    console.error("Error fetching coupon:", error);
-    return {
-      success: false,
-      message: error.message || "Failed to fetch coupon",
-      data: null,
-    };
-  }
-};
-
-// Create coupon
-export async function createCoupon(
-  _prevState: any,
-  formData: FormData
-): Promise<{
-  success: boolean;
-  message: string;
-  data?: any;
-  formData?: any;
-  errors?: Array<{ field: string; message: string }>;
-}> {
-  try {
-    // Extract form data for potential return in case of error
-    const formDataPayload = {
-      code: formData.get("code") as string,
-      description: formData.get("description") as string,
-      discountType: formData.get("discountType") as string,
-      discountValue: formData.get("discountValue") as string,
-      maxUses: formData.get("maxUses") as string,
-      minOrderAmount: formData.get("minOrderAmount") as string,
-      validFrom: formData.get("validFrom") as string,
-      validUntil: formData.get("validUntil") as string,
-      isActive: formData.get("isActive") as string,
-    };
-
-    // Basic validation
-    const discountValue = parseFloat(formData.get("discountValue") as string);
-    if (isNaN(discountValue)) {
+    // Ensure required fields exist
+    if (
+      !couponData.code ||
+      !couponData.discountType ||
+      !couponData.discountValue
+    ) {
       return {
         success: false,
-        message: "Discount value must be a valid number",
-        formData: formDataPayload,
-        errors: [{ field: "discountValue", message: "Must be a valid number" }],
-      };
-    }
-
-    const couponData: ICreateCoupon = {
-      code: formData.get("code") as string,
-      description: formData.get("description") as string,
-      discountType: formData.get("discountType") as DiscountType,
-      discountValue,
-      maxUses: formData.get("maxUses")
-        ? parseInt(formData.get("maxUses") as string)
-        : undefined,
-      minOrderAmount: formData.get("minOrderAmount")
-        ? parseFloat(formData.get("minOrderAmount") as string)
-        : 0,
-      validFrom: formData.get("validFrom")
-        ? new Date(formData.get("validFrom") as string)
-        : new Date(),
-      validUntil: formData.get("validUntil")
-        ? new Date(formData.get("validUntil") as string)
-        : undefined,
-      isActive: formData.get("isActive") === "true",
-    };
-
-    // Validate discount type
-    if (!Object.values(DiscountType).includes(couponData.discountType)) {
-      return {
-        success: false,
-        message: "Invalid discount type",
-        formData: formDataPayload,
-        errors: [{ field: "discountType", message: "Invalid discount type" }],
+        message: "Missing required fields",
+        errors: [],
       };
     }
 
     const response = await serverFetch.post("/coupon", {
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(couponData),
-      headers: {
-        "Content-Type": "application/json",
-      },
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to create coupon");
-    }
 
     const result = await response.json();
 
     if (result.success) {
-      return {
-        success: true,
-        message: result.message || "Coupon created successfully",
-        data: result.data,
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || "Failed to create coupon",
-        formData: formDataPayload,
-      };
+      revalidateTag("coupons-list", { expire: 0 });
+      revalidateTag("active-coupons", { expire: 0 });
     }
+
+    return result;
   } catch (error: any) {
     console.error("Create coupon error:", error);
     return {
       success: false,
       message: error.message || "Failed to create coupon",
-      formData: Object.fromEntries(formData.entries()),
+      errors: [],
     };
   }
 }
 
-// Update coupon
+// For useActionState - update coupon with FormData
 export async function updateCoupon(
+  id: string,
   _prevState: any,
   formData: FormData
-): Promise<{
-  success: boolean;
-  message: string;
-  data?: any;
-  formData?: any;
-  errors?: Array<{ field: string; message: string }>;
-}> {
+) {
   try {
-    const id = formData.get("id") as string;
-    if (!id) {
-      throw new Error("Coupon ID is required");
-    }
+    const couponData = formDataToJSON(formData);
 
-    // Extract form data for potential return in case of error
-    const formDataPayload = {
-      id,
-      code: formData.get("code") as string,
-      description: formData.get("description") as string,
-      discountType: formData.get("discountType") as string,
-      discountValue: formData.get("discountValue") as string,
-      maxUses: formData.get("maxUses") as string,
-      minOrderAmount: formData.get("minOrderAmount") as string,
-      validFrom: formData.get("validFrom") as string,
-      validUntil: formData.get("validUntil") as string,
-      isActive: formData.get("isActive") as string,
-    };
-
-    const couponData: IUpdateCoupon = {
-      code: formData.get("code") as string,
-      description: formData.get("description") as string,
-      discountType: formData.get("discountType") as DiscountType,
-      discountValue: formData.get("discountValue")
-        ? parseFloat(formData.get("discountValue") as string)
-        : undefined,
-      maxUses: formData.get("maxUses")
-        ? parseInt(formData.get("maxUses") as string)
-        : undefined,
-      minOrderAmount: formData.get("minOrderAmount")
-        ? parseFloat(formData.get("minOrderAmount") as string)
-        : undefined,
-      validFrom: formData.get("validFrom")
-        ? new Date(formData.get("validFrom") as string)
-        : undefined,
-      validUntil: formData.get("validUntil")
-        ? new Date(formData.get("validUntil") as string)
-        : undefined,
-      isActive: formData.get("isActive")
-        ? formData.get("isActive") === "true"
-        : undefined,
-    };
-
-    // Remove undefined values
-    Object.keys(couponData).forEach(
-      (key) =>
-        couponData[key as keyof IUpdateCoupon] === undefined &&
-        delete couponData[key as keyof IUpdateCoupon]
-    );
-
-    const response = await serverFetch.patch(`/coupon/${id}`, {
-      body: JSON.stringify(couponData),
-      headers: {
-        "Content-Type": "application/json",
-      },
+    // Remove empty or undefined values
+    Object.keys(couponData).forEach((key) => {
+      if (couponData[key] === undefined || couponData[key] === null) {
+        delete couponData[key];
+      }
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to update coupon");
+    // Don't send code for update (shouldn't change)
+    if (couponData.code) {
+      delete couponData.code;
     }
+
+    const response = await serverFetch.patch(`/coupon/${id}`, {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(couponData),
+    });
 
     const result = await response.json();
 
     if (result.success) {
-      return {
-        success: true,
-        message: result.message || "Coupon updated successfully",
-        data: result.data,
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || "Failed to update coupon",
-        formData: formDataPayload,
-      };
+      revalidateTag("coupons-list", { expire: 0 });
+      revalidateTag(`coupon-${id}`, { expire: 0 });
+      revalidateTag("active-coupons", { expire: 0 });
     }
+
+    return result;
   } catch (error: any) {
     console.error("Update coupon error:", error);
     return {
       success: false,
       message: error.message || "Failed to update coupon",
-      formData: Object.fromEntries(formData.entries()),
+      errors: [],
     };
   }
 }
 
-// Delete coupon
-export async function deleteCoupon(id: string): Promise<{
-  success: boolean;
-  message: string;
-}> {
+// Simple get all coupons
+export async function getCoupons(queryParams?: {
+  searchTerm?: string;
+  page?: number;
+  limit?: number;
+  sortBy?: string;
+  sortOrder?: "asc" | "desc";
+  isActive?: boolean;
+  valid?: boolean;
+}) {
+  try {
+    const query = new URLSearchParams();
+
+    if (queryParams?.searchTerm)
+      query.append("searchTerm", queryParams.searchTerm);
+    if (queryParams?.page) query.append("page", queryParams.page.toString());
+    if (queryParams?.limit) query.append("limit", queryParams.limit.toString());
+    if (queryParams?.sortBy) query.append("sortBy", queryParams.sortBy);
+    if (queryParams?.sortOrder)
+      query.append("sortOrder", queryParams.sortOrder);
+    if (queryParams?.isActive !== undefined)
+      query.append("isActive", queryParams.isActive.toString());
+    if (queryParams?.valid !== undefined)
+      query.append("valid", queryParams.valid.toString());
+
+    const queryString = query.toString();
+
+    const response = await serverFetch.get(
+      `/coupon${queryString ? `?${queryString}` : ""}`,
+      {
+        next: {
+          tags: ["coupons-list"],
+          revalidate: 300,
+        },
+      }
+    );
+
+    return await response.json();
+  } catch (error: any) {
+    console.error("Get coupons error:", error);
+    return {
+      success: false,
+      message: error.message || "Failed to get coupons",
+      data: [],
+      meta: {},
+    };
+  }
+}
+
+// Simple delete coupon
+export async function deleteCoupon(id: string) {
   try {
     const response = await serverFetch.delete(`/coupon/${id}`);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to delete coupon");
-    }
-
     const result = await response.json();
 
     if (result.success) {
-      return {
-        success: true,
-        message: result.message || "Coupon deleted successfully",
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || "Failed to delete coupon",
-      };
+      revalidateTag("coupons-list", { expire: 0 });
+      revalidateTag(`coupon-${id}`, { expire: 0 });
+      revalidateTag("active-coupons", { expire: 0 });
     }
+
+    return result;
   } catch (error: any) {
     console.error("Delete coupon error:", error);
     return {
@@ -327,42 +196,41 @@ export async function deleteCoupon(id: string): Promise<{
   }
 }
 
-// Toggle coupon status
-export async function toggleCouponStatus(
-  id: string,
-  isActive: boolean
-): Promise<{
-  success: boolean;
-  message: string;
-  data?: ICoupon;
-}> {
+// Simple toggle status
+export async function toggleCouponStatus(id: string, isActive: boolean) {
   try {
+    console.log("Toggle coupon status called:", { id, isActive });
+
     const response = await serverFetch.patch(`/coupon/${id}/status`, {
-      body: JSON.stringify({ isActive }),
       headers: {
         "Content-Type": "application/json",
+        Accept: "application/json",
       },
+      body: JSON.stringify({ isActive }),
     });
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to update coupon status");
+    console.log("Toggle response status:", response.status);
+
+    // Check if response has body
+    const responseText = await response.text();
+    console.log("Toggle response text:", responseText);
+
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      result = { success: false, message: "Invalid JSON response" };
     }
 
-    const result = await response.json();
+    console.log("Toggle parsed result:", result);
 
     if (result.success) {
-      return {
-        success: true,
-        message: result.message || "Coupon status updated successfully",
-        data: result.data,
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || "Failed to update coupon status",
-      };
+      revalidateTag("coupons-list", { expire: 0 });
+      revalidateTag(`coupon-${id}`, { expire: 0 });
+      revalidateTag("active-coupons", { expire: 0 });
     }
+
+    return result;
   } catch (error: any) {
     console.error("Toggle coupon status error:", error);
     return {
@@ -372,47 +240,27 @@ export async function toggleCouponStatus(
   }
 }
 
-// Validate coupon
-export async function validateCoupon(
-  code: string,
-  orderAmount: number
-): Promise<{
-  success: boolean;
-  message: string;
-  data?: ICouponValidationResult;
-}> {
+export async function updateCouponStatus(id: string, isActive: boolean) {
   try {
-    const response = await serverFetch.post("/coupon/validate", {
-      body: JSON.stringify({ code, orderAmount }),
-      headers: {
-        "Content-Type": "application/json",
-      },
+    const response = await serverFetch.patch(`/coupon/${id}`, {
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ isActive }),
     });
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.message || "Failed to validate coupon");
-    }
 
     const result = await response.json();
 
     if (result.success) {
-      return {
-        success: true,
-        message: result.message || "Coupon validated successfully",
-        data: result.data,
-      };
-    } else {
-      return {
-        success: false,
-        message: result.message || "Invalid coupon",
-      };
+      revalidateTag("coupons-list", { expire: 0 });
+      revalidateTag(`coupon-${id}`, { expire: 0 });
+      revalidateTag("active-coupons", { expire: 0 });
     }
+
+    return result;
   } catch (error: any) {
-    console.error("Validate coupon error:", error);
+    console.error("Update coupon status error:", error);
     return {
       success: false,
-      message: error.message || "Failed to validate coupon",
+      message: error.message || "Failed to update coupon status",
     };
   }
 }

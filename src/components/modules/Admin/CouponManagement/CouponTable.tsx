@@ -1,7 +1,10 @@
-// components/modules/Coupon/CouponTable.tsx
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
-import { deleteCoupon, toggleCouponStatus } from "@/services/admin/couponManagement.actions";
+import {
+  deleteCoupon,
+  updateCouponStatus,
+} from "@/services/admin/couponManagement.actions";
 import { ICoupon } from "@/types/coupon.interface";
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
@@ -9,9 +12,10 @@ import { toast } from "sonner";
 import ManagementTable from "../../Dashboard/shared/ManagementTable";
 import DeleteConfirmationDialog from "../../Dashboard/shared/DeleteConfirmationDialog";
 import { Switch } from "@/components/ui/switch";
-import { Edit, Trash2 } from "lucide-react";
+import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { couponColumns } from "./CouponColumns";
+import EditCouponButton from "./EditCouponButton";
 
 interface CouponTableProps {
   coupons: ICoupon[];
@@ -34,13 +38,19 @@ const CouponTable = ({ coupons }: CouponTableProps) => {
   };
 
   const handleToggleStatus = async (coupon: ICoupon) => {
-    const result = await toggleCouponStatus(coupon.id, !coupon.isActive);
-    
-    if (result.success) {
-      toast.success(result.message || "Coupon status updated");
-      handleRefresh();
-    } else {
-      toast.error(result.message || "Failed to update status");
+    try {
+      // Use the regular update endpoint instead
+      const result = await updateCouponStatus(coupon.id, !coupon.isActive);
+
+      if (result.success) {
+        toast.success(result.message || "Coupon status updated");
+        handleRefresh();
+      } else {
+        toast.error(result.message || "Failed to update status");
+      }
+    } catch (error: any) {
+      console.error("Toggle status error:", error);
+      toast.error(error.message || "Failed to update status");
     }
   };
 
@@ -48,15 +58,21 @@ const CouponTable = ({ coupons }: CouponTableProps) => {
     if (!deletingCoupon) return;
 
     setIsDeletingDialog(true);
-    const result = await deleteCoupon(deletingCoupon.id);
-    setIsDeletingDialog(false);
-    
-    if (result.success) {
-      toast.success(result.message || "Coupon deleted successfully");
-      setDeletingCoupon(null);
-      handleRefresh();
-    } else {
-      toast.error(result.message || "Failed to delete coupon");
+    try {
+      const result = await deleteCoupon(deletingCoupon.id);
+
+      if (result.success) {
+        toast.success(result.message || "Coupon deleted successfully");
+        setDeletingCoupon(null);
+        handleRefresh();
+      } else {
+        toast.error(result.message || "Failed to delete coupon");
+      }
+    } catch (error: any) {
+      console.error("Delete error:", error);
+      toast.error(error.message || "Failed to delete coupon");
+    } finally {
+      setIsDeletingDialog(false);
     }
   };
 
@@ -64,12 +80,13 @@ const CouponTable = ({ coupons }: CouponTableProps) => {
   const columnsWithActions = [
     ...couponColumns,
     {
-      header: "Status",
+      header: "Active",
       accessor: (coupon: ICoupon) => (
-        <div className="flex items-center gap-2">
+        <div className="flex justify-center">
           <Switch
             checked={coupon.isActive}
             onCheckedChange={() => handleToggleStatus(coupon)}
+            className="data-[state=checked]:bg-green-600 h-5 w-9"
           />
         </div>
       ),
@@ -77,22 +94,13 @@ const CouponTable = ({ coupons }: CouponTableProps) => {
     {
       header: "Actions",
       accessor: (coupon: ICoupon) => (
-        <div className="flex items-center gap-2">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => {
-              // Edit functionality would go here - either open a dialog or navigate
-              toast.info("Edit functionality to be implemented");
-            }}
-          >
-            <Edit className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center justify-center gap-1">
+          <EditCouponButton coupon={coupon} />
           <Button
             variant="ghost"
             size="sm"
             onClick={() => handleDelete(coupon)}
-            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+            className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -106,7 +114,6 @@ const CouponTable = ({ coupons }: CouponTableProps) => {
       <ManagementTable
         data={coupons}
         columns={columnsWithActions}
-        onDelete={handleDelete}
         getRowKey={(coupon) => coupon.id}
         emptyMessage="No coupons found"
       />

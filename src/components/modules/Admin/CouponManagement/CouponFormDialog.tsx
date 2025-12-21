@@ -11,97 +11,143 @@ import {
 import { Field, FieldLabel } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { useActionState, useEffect, useRef, useState } from "react";
+import {
+  useActionState,
+  useEffect,
+  useRef,
+  useState,
+  useCallback,
+} from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createCoupon, updateCoupon } from "@/services/admin/couponManagement.actions";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  createCoupon,
+  updateCoupon,
+} from "@/services/admin/couponManagement.actions";
 import { DiscountType, ICoupon } from "@/types/coupon.interface";
 
 interface ICouponFormDialogProps {
   open: boolean;
   onClose: () => void;
   onSuccess: () => void;
-  coupon?: ICoupon; // Add optional coupon prop for editing
-}
-
-// Define the state type that matches IInputErrorState
-interface CouponFormState {
-  success: boolean;
-  message: string;
-  errors: Array<{ field: string; message: string }>;
-  formData?: any;
-  data?: any;
+  coupon?: ICoupon;
 }
 
 const CouponFormDialog = ({
   open,
   onClose,
   onSuccess,
-  coupon, // Destructure the coupon prop
+  coupon,
 }: ICouponFormDialogProps) => {
   const formRef = useRef<HTMLFormElement>(null);
-  
-  // Choose action based on whether we're editing or creating
-  const action = coupon ? updateCoupon : createCoupon;
-  
-  // Cast the action to match the expected signature
+
+  // Create different actions for create and update
+  const createAction = createCoupon;
+
+  // For update, create a wrapper function
+  const updateAction = coupon
+    ? async (_prevState: any, formData: FormData) => {
+        return updateCoupon(coupon.id, _prevState, formData);
+      }
+    : undefined;
+
   const [state, formAction, pending] = useActionState(
-    action as (state: CouponFormState, formData: FormData) => Promise<CouponFormState>,
+    updateAction || createAction,
     {
       success: false,
-      message: '',
-      errors: []
+      message: "",
+      errors: [],
     }
   );
-  
+
   const [discountType, setDiscountType] = useState<DiscountType>(
     coupon?.discountType || DiscountType.PERCENTAGE
   );
   const [isActive, setIsActive] = useState(coupon?.isActive ?? true);
   const processedStateRef = useRef<string | null>(null);
 
+  // Wrap handleClose in useCallback to prevent unnecessary re-renders
+  const handleClose = useCallback(() => {
+    if (formRef.current) {
+      formRef.current.reset();
+    }
+    onClose();
+  }, [onClose]);
+
   // Format date for datetime-local input
   const formatDateForInput = (date: Date | string | undefined): string => {
-    if (!date) return '';
-    
-    const dateObj = date instanceof Date ? date : new Date(date);
-    
-    // Format to YYYY-MM-DDTHH:mm
-    const year = dateObj.getFullYear();
-    const month = String(dateObj.getMonth() + 1).padStart(2, '0');
-    const day = String(dateObj.getDate()).padStart(2, '0');
-    const hours = String(dateObj.getHours()).padStart(2, '0');
-    const minutes = String(dateObj.getMinutes()).padStart(2, '0');
-    
-    return `${year}-${month}-${day}T${hours}:${minutes}`;
+    if (!date) return "";
+
+    try {
+      const dateObj = date instanceof Date ? date : new Date(date);
+      if (isNaN(dateObj.getTime())) return "";
+
+      // Format to YYYY-MM-DDTHH:mm
+      const year = dateObj.getFullYear();
+      const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+      const day = String(dateObj.getDate()).padStart(2, "0");
+      const hours = String(dateObj.getHours()).padStart(2, "0");
+      const minutes = String(dateObj.getMinutes()).padStart(2, "0");
+
+      return `${year}-${month}-${day}T${hours}:${minutes}`;
+    } catch {
+      return "";
+    }
+  };
+
+  // Get default date for new coupons
+  const getDefaultValidFrom = () => {
+    if (coupon?.validFrom) {
+      return formatDateForInput(coupon.validFrom);
+    }
+    // Default to now, rounded to nearest 5 minutes
+    const now = new Date();
+    now.setMinutes(Math.floor(now.getMinutes() / 5) * 5);
+    return formatDateForInput(now);
   };
 
   // Handle state changes from the action
   useEffect(() => {
-    if (!state) return;
-    
+    // Skip if state is initial state (no action has been performed yet)
+    if (!state || (!state.message && !state.success)) return;
+
     const stateKey = JSON.stringify(state);
-    
+
     // Only process if we haven't seen this state before
     if (stateKey !== processedStateRef.current) {
       processedStateRef.current = stateKey;
-      
+
       if (state.success) {
-        toast.success(state.message || (coupon ? "Coupon updated successfully" : "Coupon created successfully"));
-        
+        toast.success(
+          state.message ||
+            (coupon
+              ? "Coupon updated successfully"
+              : "Coupon created successfully")
+        );
+
         setTimeout(() => {
-          onClose();
+          handleClose();
           // Small delay before success callback
           setTimeout(() => {
             onSuccess();
           }, 50);
         }, 100);
-      } else {
-        toast.error(state.message || (coupon ? "Failed to update coupon" : "Failed to create coupon"));
+      } else if (state.message) {
+        // Only show error if there's an actual message
+        toast.error(
+          state.message ||
+            (coupon ? "Failed to update coupon" : "Failed to create coupon")
+        );
       }
     }
-  }, [state, onSuccess, onClose, coupon]);
+  }, [state, onSuccess, coupon, handleClose]);
 
   // Reset form when dialog opens
   const handleOpenChange = (isOpen: boolean) => {
@@ -120,24 +166,16 @@ const CouponFormDialog = ({
     }
   };
 
-  const handleClose = () => {
-    if (formRef.current) {
-      formRef.current.reset();
-    }
-    onClose();
-  };
-
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{coupon ? "Edit Coupon" : "Create New Coupon"}</DialogTitle>
+          <DialogTitle>
+            {coupon ? "Edit Coupon" : "Create New Coupon"}
+          </DialogTitle>
         </DialogHeader>
 
         <form ref={formRef} action={formAction} className="space-y-4">
-          {/* Hidden field for coupon ID when editing */}
-          {coupon && <input type="hidden" name="id" value={coupon.id} />}
-          
           <input type="hidden" name="isActive" value={isActive.toString()} />
           <input type="hidden" name="discountType" value={discountType} />
 
@@ -148,11 +186,18 @@ const CouponFormDialog = ({
               name="code"
               placeholder="SUMMER25"
               className="font-mono uppercase"
-              defaultValue={coupon?.code || state?.formData?.code || ""}
+              defaultValue={coupon?.code || ""}
               required
-              disabled={!!coupon} // Disable code editing if it's an existing coupon
+              maxLength={20}
+              pattern="[A-Z0-9_-]+"
+              title="Only uppercase letters, numbers, underscores, and hyphens"
+              readOnly={!!coupon}
             />
-            {coupon && <p className="text-xs text-gray-500 mt-1">Coupon code cannot be changed</p>}
+            {coupon && (
+              <p className="text-xs text-gray-500 mt-1">
+                Coupon code cannot be changed
+              </p>
+            )}
             <InputFieldError field="code" state={state} />
           </Field>
 
@@ -167,8 +212,12 @@ const CouponFormDialog = ({
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value={DiscountType.PERCENTAGE}>Percentage</SelectItem>
-                  <SelectItem value={DiscountType.FIXED_AMOUNT}>Fixed Amount</SelectItem>
+                  <SelectItem value={DiscountType.PERCENTAGE}>
+                    Percentage
+                  </SelectItem>
+                  <SelectItem value={DiscountType.FIXED}>
+                    Fixed Amount
+                  </SelectItem>
                 </SelectContent>
               </Select>
               <InputFieldError field="discountType" state={state} />
@@ -176,17 +225,23 @@ const CouponFormDialog = ({
 
             <Field>
               <FieldLabel htmlFor="discountValue">
-                {discountType === DiscountType.PERCENTAGE ? "Discount % *" : "Discount Amount ($) *"}
+                {discountType === DiscountType.PERCENTAGE
+                  ? "Discount % *"
+                  : "Discount Amount ($) *"}
               </FieldLabel>
               <Input
                 id="discountValue"
                 name="discountValue"
                 type="number"
-                placeholder={discountType === DiscountType.PERCENTAGE ? "25" : "50"}
+                placeholder={
+                  discountType === DiscountType.PERCENTAGE ? "25" : "50"
+                }
                 min="0"
-                max={discountType === DiscountType.PERCENTAGE ? "100" : undefined}
+                max={
+                  discountType === DiscountType.PERCENTAGE ? "100" : undefined
+                }
                 step="0.01"
-                defaultValue={coupon?.discountValue || state?.formData?.discountValue || ""}
+                defaultValue={coupon?.discountValue || ""}
                 required
               />
               <InputFieldError field="discountValue" state={state} />
@@ -195,20 +250,24 @@ const CouponFormDialog = ({
 
           <div className="grid grid-cols-2 gap-4">
             <Field>
-              <FieldLabel htmlFor="maxUses">Max Uses (0 = unlimited)</FieldLabel>
+              <FieldLabel htmlFor="maxUses">
+                Max Uses (0 = unlimited)
+              </FieldLabel>
               <Input
                 id="maxUses"
                 name="maxUses"
                 type="number"
                 placeholder="0"
                 min="0"
-                defaultValue={coupon?.maxUses?.toString() || state?.formData?.maxUses || "0"}
+                defaultValue={coupon?.maxUses || "0"}
               />
               <InputFieldError field="maxUses" state={state} />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="minOrderAmount">Min Order Amount ($)</FieldLabel>
+              <FieldLabel htmlFor="minOrderAmount">
+                Min Order Amount ($)
+              </FieldLabel>
               <Input
                 id="minOrderAmount"
                 name="minOrderAmount"
@@ -216,7 +275,7 @@ const CouponFormDialog = ({
                 placeholder="0"
                 min="0"
                 step="0.01"
-                defaultValue={coupon?.minOrderAmount?.toString() || state?.formData?.minOrderAmount || "0"}
+                defaultValue={coupon?.minOrderAmount || "0"}
               />
               <InputFieldError field="minOrderAmount" state={state} />
             </Field>
@@ -229,19 +288,21 @@ const CouponFormDialog = ({
                 id="validFrom"
                 name="validFrom"
                 type="datetime-local"
-                defaultValue={formatDateForInput(coupon?.validFrom) || state?.formData?.validFrom || ""}
+                defaultValue={getDefaultValidFrom()}
                 required
               />
               <InputFieldError field="validFrom" state={state} />
             </Field>
 
             <Field>
-              <FieldLabel htmlFor="validUntil">Valid Until (Optional)</FieldLabel>
+              <FieldLabel htmlFor="validUntil">
+                Valid Until (Optional)
+              </FieldLabel>
               <Input
                 id="validUntil"
                 name="validUntil"
                 type="datetime-local"
-                defaultValue={formatDateForInput(coupon?.validUntil) || state?.formData?.validUntil || ""}
+                defaultValue={formatDateForInput(coupon?.validUntil)}
               />
               <InputFieldError field="validUntil" state={state} />
             </Field>
@@ -253,20 +314,29 @@ const CouponFormDialog = ({
               id="description"
               name="description"
               placeholder="e.g., Summer sale discount for all products"
-              defaultValue={coupon?.description || state?.formData?.description || ""}
+              defaultValue={coupon?.description || ""}
               rows={2}
             />
             <InputFieldError field="description" state={state} />
           </Field>
 
-          <Field className="flex items-center justify-between">
-            <FieldLabel htmlFor="isActive">Active</FieldLabel>
+          {/* Compact active status field */}
+          <div className="flex items-center justify-between py-2">
+            <div className="space-y-0.5">
+              <label className="text-sm font-medium leading-none">
+                Active Status
+              </label>
+              <p className="text-xs text-gray-500">
+                {isActive ? "Active" : "Inactive"}
+              </p>
+            </div>
             <Switch
               id="isActive"
               checked={isActive}
               onCheckedChange={setIsActive}
+              className="data-[state=checked]:bg-green-600 h-5 w-9"
             />
-          </Field>
+          </div>
 
           <div className="flex justify-end gap-2 pt-4">
             <Button
@@ -278,10 +348,13 @@ const CouponFormDialog = ({
               Cancel
             </Button>
             <Button type="submit" disabled={pending}>
-              {pending 
-                ? (coupon ? "Updating..." : "Creating...") 
-                : (coupon ? "Update Coupon" : "Create Coupon")
-              }
+              {pending
+                ? coupon
+                  ? "Updating..."
+                  : "Creating..."
+                : coupon
+                ? "Update Coupon"
+                : "Create Coupon"}
             </Button>
           </div>
         </form>

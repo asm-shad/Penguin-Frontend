@@ -1,4 +1,3 @@
-// components/modules/Coupon/EditCouponButton.tsx
 "use client";
 
 import { Button } from "@/components/ui/button";
@@ -18,15 +17,13 @@ const EditCouponButton = ({ coupon }: EditCouponButtonProps) => {
 
   const handleSuccess = () => {
     setIsDialogOpen(false);
-    setTimeout(() => {
-      router.refresh();
-    }, 100);
+    router.refresh();
   };
 
   return (
     <>
       <Button
-        variant="outline"
+        variant="ghost"
         size="sm"
         onClick={() => setIsDialogOpen(true)}
         className="h-8 w-8 p-0"
@@ -34,12 +31,15 @@ const EditCouponButton = ({ coupon }: EditCouponButtonProps) => {
         <Edit className="h-4 w-4" />
       </Button>
 
-      <CouponFormDialog
-        open={isDialogOpen}
-        onClose={() => setIsDialogOpen(false)}
-        onSuccess={handleSuccess}
-        coupon={coupon}
-      />
+      {isDialogOpen && (
+        <CouponFormDialog
+          key={coupon.id}
+          open={isDialogOpen}
+          onClose={() => setIsDialogOpen(false)}
+          onSuccess={handleSuccess}
+          coupon={coupon}
+        />
+      )}
     </>
   );
 };

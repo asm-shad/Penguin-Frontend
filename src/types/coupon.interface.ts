@@ -1,7 +1,6 @@
-// types/coupon.interface.ts
 export const DiscountType = {
   PERCENTAGE: "PERCENTAGE",
-  FIXED_AMOUNT: "FIXED_AMOUNT",
+  FIXED: "FIXED",
 } as const;
 
 export type DiscountType = (typeof DiscountType)[keyof typeof DiscountType];
@@ -59,18 +58,4 @@ export interface IUpdateCouponStatus {
 export interface IValidateCoupon {
   code: string;
   orderAmount: number;
-}
-
-export interface ICouponValidationResult {
-  isValid: boolean;
-  coupon: {
-    id: string;
-    code: string;
-    discountType: DiscountType;
-    discountValue: number;
-    discountAmount: number;
-    maxUses?: number;
-    usedCount: number;
-    minOrderAmount: number;
-  };
 }
