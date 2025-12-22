@@ -24,18 +24,18 @@ const OrdersComponent = ({ orders }: { orders: IOrder[] }) => {
   const handleDelete = async (orderId: string, orderNumber: string) => {
     try {
       setIsCanceling(orderId);
-      
+
       const confirmed = window.confirm(
         `Are you sure you want to cancel order ${orderNumber}?`
       );
-      
+
       if (!confirmed) {
         setIsCanceling(null);
         return;
       }
 
       const result = await cancelOrder(orderId);
-      
+
       if (result.success) {
         toast.success(`Order ${orderNumber} cancelled successfully!`);
         // Refresh the page to show updated orders
@@ -76,8 +76,10 @@ const OrdersComponent = ({ orders }: { orders: IOrder[] }) => {
   // Check if order can be cancelled
   const canCancelOrder = (order: IOrder) => {
     const cancellableStatuses = ["PENDING", "PROCESSING"];
-    return cancellableStatuses.includes(order.status) && 
-           !order.payments?.some(p => p.paymentStatus === "COMPLETED");
+    return (
+      cancellableStatuses.includes(order.status) &&
+      !order.payments?.some((p) => p.paymentStatus === "COMPLETED")
+    );
   };
 
   return (
@@ -114,7 +116,8 @@ const OrdersComponent = ({ orders }: { orders: IOrder[] }) => {
                         order.status
                       )}`}
                     >
-                      {order.status.charAt(0) + order.status.slice(1).toLowerCase()}
+                      {order.status.charAt(0) +
+                        order.status.slice(1).toLowerCase()}
                     </span>
                   </TableCell>
 

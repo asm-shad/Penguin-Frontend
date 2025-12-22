@@ -1,6 +1,11 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { IProduct, IProductVariant } from "@/types/product.interface";
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
+import {
+  validateCoupon,
+  CouponValidationResult,
+} from "@/services/coupon/coupon.service";
 
 export interface CartItem {
   product: IProduct;
@@ -8,16 +13,39 @@ export interface CartItem {
   selectedVariant?: IProductVariant;
 }
 
+interface AppliedCoupon {
+  code: string;
+  discountType: "PERCENTAGE" | "FIXED";
+  discountValue: number;
+  discountAmount: number;
+  minOrderAmount: number;
+}
+
 interface StoreState {
   // Cart
   items: CartItem[];
+  appliedCoupon: AppliedCoupon | null;
+  couponValidationResult: CouponValidationResult | null;
+
+  // Cart actions
   addItem: (product: IProduct, variant?: IProductVariant) => void;
   removeItem: (productId: string) => void;
   deleteCartProduct: (productId: string) => void;
   resetCart: () => void;
-  getTotalPrice: () => number; // Final price after discounts
+
+  // Price calculations
+  getTotalPrice: () => number; // Final price after product discounts only
   getSubTotalPrice: () => number; // Original price total before discounts
-  getDiscountTotal: () => number; // Total discount amount
+  getProductDiscountTotal: () => number; // Total product discount amount
+  getCouponDiscount: () => number; // Coupon discount amount
+  getFinalTotal: () => number; // Final price after all discounts
+
+  // Coupon actions
+  applyCoupon: (code: string) => Promise<{ success: boolean; message: string }>;
+  removeCoupon: () => void;
+  clearCouponValidation: () => void;
+
+  // Utility
   getItemCount: (productId: string) => number;
   getGroupedItems: () => CartItem[];
 
@@ -33,6 +61,8 @@ const useStore = create<StoreState>()(
     (set, get) => ({
       // Cart
       items: [],
+      appliedCoupon: null,
+      couponValidationResult: null,
 
       addItem: (product, variant) =>
         set((state) => {
@@ -80,9 +110,14 @@ const useStore = create<StoreState>()(
           items: state.items.filter((item) => item.product.id !== productId),
         })),
 
-      resetCart: () => set({ items: [] }),
+      resetCart: () =>
+        set({
+          items: [],
+          appliedCoupon: null,
+          couponValidationResult: null,
+        }),
 
-      // Final price after all discounts (what customer pays)
+      // Final price after product discounts only
       getTotalPrice: () => {
         return get().items.reduce((total, item) => {
           const basePrice =
@@ -102,8 +137,8 @@ const useStore = create<StoreState>()(
         }, 0);
       },
 
-      // Total discount amount
-      getDiscountTotal: () => {
+      // Total product discount amount
+      getProductDiscountTotal: () => {
         return get().items.reduce((total, item) => {
           const basePrice =
             item.selectedVariant?.price || item.product.price || 0;
@@ -111,6 +146,77 @@ const useStore = create<StoreState>()(
           const discountAmount = (basePrice * discount) / 100;
           return total + discountAmount * item.quantity;
         }, 0);
+      },
+
+      // Coupon discount amount
+      getCouponDiscount: () => {
+        const { appliedCoupon, getTotalPrice } = get();
+        const totalBeforeCoupon = getTotalPrice();
+
+        if (!appliedCoupon) return 0;
+
+        // Check minimum order amount
+        if (totalBeforeCoupon < appliedCoupon.minOrderAmount) {
+          // Remove coupon if minimum order not met
+          set({ appliedCoupon: null });
+          return 0;
+        }
+
+        if (appliedCoupon.discountType === "PERCENTAGE") {
+          return (totalBeforeCoupon * appliedCoupon.discountValue) / 100;
+        } else {
+          // Fixed amount discount - cannot exceed total
+          return Math.min(appliedCoupon.discountValue, totalBeforeCoupon);
+        }
+      },
+
+      // Final price after all discounts
+      getFinalTotal: () => {
+        const totalBeforeCoupon = get().getTotalPrice();
+        const couponDiscount = get().getCouponDiscount();
+        return Math.max(0, totalBeforeCoupon - couponDiscount);
+      },
+
+      // Coupon actions
+      applyCoupon: async (code: string) => {
+        try {
+          const totalBeforeCoupon = get().getTotalPrice();
+          const result = await validateCoupon(code, totalBeforeCoupon);
+
+          set({ couponValidationResult: result });
+
+          if (result.isValid && result.coupon) {
+            const appliedCoupon = {
+              code: result.coupon.code,
+              discountType: result.coupon.discountType,
+              discountValue: result.coupon.discountValue,
+              discountAmount: result.coupon.discountAmount,
+              minOrderAmount: result.coupon.minOrderAmount,
+            };
+
+            set({ appliedCoupon });
+            return { success: true, message: result.message };
+          }
+
+          return { success: false, message: result.message };
+        } catch (error: any) {
+          console.error("Apply coupon error:", error);
+          return {
+            success: false,
+            message: error.message || "Failed to apply coupon",
+          };
+        }
+      },
+
+      removeCoupon: () => {
+        set({
+          appliedCoupon: null,
+          couponValidationResult: null,
+        });
+      },
+
+      clearCouponValidation: () => {
+        set({ couponValidationResult: null });
       },
 
       getItemCount: (productId) => {
@@ -153,6 +259,11 @@ const useStore = create<StoreState>()(
     }),
     {
       name: "cart-store",
+      partialize: (state) => ({
+        items: state.items,
+        appliedCoupon: state.appliedCoupon, // Persist coupon
+        favoriteProduct: state.favoriteProduct,
+      }),
     }
   )
 );
