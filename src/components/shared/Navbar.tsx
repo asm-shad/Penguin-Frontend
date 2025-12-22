@@ -76,7 +76,7 @@ const Navbar = () => {
           {/* Dashboard button for logged-in users */}
           {isAuthenticated && (
             <Link
-              href="/dashboard"
+              href="/my-profile"
               className="group relative hover:text-shop_light_green hoverEffect"
               title="Dashboard"
             >

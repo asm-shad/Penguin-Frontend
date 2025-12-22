@@ -62,24 +62,24 @@ export const userAccountNavItems: NavSection[] = [
   {
     title: "Account",
     items: [
-      {
-        title: "My Orders",
-        href: "/my-orders",
-        icon: "Package",
-        roles: ["USER"],
-      },
-      {
-        title: "Wishlist",
-        href: "/wishlist",
-        icon: "Heart",
-        roles: ["USER"],
-      },
-      {
-        title: "Addresses",
-        href: "/my-addresses",
-        icon: "MapPin",
-        roles: ["USER"],
-      },
+      // {
+      //   title: "My Orders",
+      //   href: "/my-orders",
+      //   icon: "Package",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Wishlist",
+      //   href: "/wishlist",
+      //   icon: "Heart",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Addresses",
+      //   href: "/my-addresses",
+      //   icon: "MapPin",
+      //   roles: ["USER"],
+      // },
     ],
   },
 ];
@@ -89,70 +89,70 @@ export const userNavItems: NavSection[] = [
   {
     title: "Shopping",
     items: [
-      {
-        title: "Categories",
-        href: "/categories",
-        icon: "Layers",
-        roles: ["USER"],
-      },
-      {
-        title: "Deals & Offers",
-        href: "/deals",
-        icon: "Percent",
-        roles: ["USER"],
-      },
-      {
-        title: "Featured Products",
-        href: "/featured",
-        icon: "Star",
-        roles: ["USER"],
-      },
+      // {
+      //   title: "Categories",
+      //   href: "/categories",
+      //   icon: "Layers",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Deals & Offers",
+      //   href: "/deals",
+      //   icon: "Percent",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Featured Products",
+      //   href: "/featured",
+      //   icon: "Star",
+      //   roles: ["USER"],
+      // },
     ],
   },
   {
     title: "My Account",
     items: [
-      {
-        title: "Order History",
-        href: "/dashboard/orders",
-        icon: "Package",
-        roles: ["USER"],
-      },
-      {
-        title: "Track Order",
-        href: "/dashboard/track-order",
-        icon: "Truck",
-        roles: ["USER"],
-      },
-      {
-        title: "My Reviews",
-        href: "/dashboard/reviews",
-        icon: "Star",
-        roles: ["USER"],
-      },
+      // {
+      //   title: "Order History",
+      //   href: "/dashboard/orders",
+      //   icon: "Package",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Track Order",
+      //   href: "/dashboard/track-order",
+      //   icon: "Truck",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "My Reviews",
+      //   href: "/dashboard/reviews",
+      //   icon: "Star",
+      //   roles: ["USER"],
+      // },
     ],
   },
   {
     title: "Support",
     items: [
-      {
-        title: "Help Center",
-        href: "/help",
-        icon: "HelpCircle",
-        roles: ["USER"],
-      },
-      {
-        title: "Contact Support",
-        href: "/contact-support",
-        icon: "MessageSquare",
-        roles: ["USER"],
-      },
-      {
-        title: "Return Items",
-        href: "/returns",
-        icon: "RotateCcw",
-        roles: ["USER"],
-      },
+      // {
+      //   title: "Help Center",
+      //   href: "/help",
+      //   icon: "HelpCircle",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Contact Support",
+      //   href: "/contact-support",
+      //   icon: "MessageSquare",
+      //   roles: ["USER"],
+      // },
+      // {
+      //   title: "Return Items",
+      //   href: "/returns",
+      //   icon: "RotateCcw",
+      //   roles: ["USER"],
+      // },
     ],
   },
 ];
@@ -575,7 +575,7 @@ export const getNavItemsByRole = (role: UserRole): NavSection[] => {
       ];
 
     case "USER":
-      return [...commonNavItems, ...userAccountNavItems, ...userNavItems];
+      return [...commonNavItems, ...userAccountNavItems, ...userNavItems]; //
 
     default:
       return commonNavItems;
